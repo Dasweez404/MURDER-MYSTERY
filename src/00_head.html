@@ -1,0 +1,237 @@
+<title>Murder Concept</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Figtree:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: a full-bleed 3D viewport; every screen (menu, lobby, HUD, end) is an overlay panel on top of it. */
+:root{
+  --ink:#0b0a10; --panel:#15131c; --panel2:#1d1a27; --line:#2f2b3b;
+  --fg:#ece6da; --dim:#9d97ab; --blood:#e2394a; --brass:#cfa750; --ok:#58c48a; --warn:#f0a23a;
+  --display:'Big Shoulders Display','Arial Narrow',Impact,sans-serif;
+  --body:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{margin:0;background:var(--ink);color:var(--fg);font:15px/1.45 var(--body);overflow:hidden}
+*{box-sizing:border-box}
+#app{position:relative;width:100%;height:100%;overflow:hidden;background:var(--ink);user-select:none}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.screen{position:absolute;inset:0;overflow:auto;padding:24px 16px;background:radial-gradient(120% 90% at 20% 0%,#2a1018 0%,#0b0a10 60%)}
+.screen[hidden]{display:none!important}
+.wrap{max-width:1040px;margin:0 auto;display:grid;gap:24px}
+h1{font:900 clamp(56px,11vw,132px)/.82 var(--display);letter-spacing:.01em;margin:0;text-transform:uppercase}
+h1 em{font-style:normal;color:var(--blood);display:block}
+h2{font:700 22px/1 var(--display);letter-spacing:.08em;text-transform:uppercase;margin:0 0 12px;color:var(--brass)}
+.lede{max-width:52ch;color:var(--dim);margin:0}
+.loop{font:500 13px var(--mono);color:var(--brass);letter-spacing:.04em}
+.cols{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:24px}
+@media (max-width:760px){.cols{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--panel);border:1px solid var(--line);padding:18px;border-radius:4px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;background:var(--panel2);border:1px solid var(--line);border-radius:3px;font-weight:700;letter-spacing:.02em}
+.btn:hover{border-color:var(--brass)}
+.btn.primary{background:var(--blood);border-color:var(--blood);color:#fff}
+.btn.primary:hover{filter:brightness(1.12)}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.stack{display:grid;gap:10px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input[type=text]{background:var(--ink);border:1px solid var(--line);color:var(--fg);padding:11px 12px;border-radius:3px;font:inherit;min-width:0;width:100%}
+label.l{font:700 12px var(--mono);letter-spacing:.08em;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:6px}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px;margin:0}
+.keys dt{font:700 12px var(--mono);color:var(--brass);white-space:nowrap}
+.keys dd{margin:0;color:var(--dim)}
+.note{font-size:13px;color:var(--dim)}
+.seg{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.seg button{flex:1 1 auto;background:var(--ink);border:0;border-right:1px solid var(--line);padding:10px 12px;font-weight:600;color:var(--dim)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed=true]{background:var(--brass);color:#16110a}
+.seg button.m[aria-pressed=true]{background:var(--blood);color:#fff}
+.seg button.i[aria-pressed=true]{background:var(--ok);color:#06140d}
+.plist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.plist li{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:10px 12px;background:var(--ink);border:1px solid var(--line);border-radius:3px;align-items:center}
+.plist .nm{font-weight:700;overflow-wrap:anywhere}
+.tag{font:700 11px var(--mono);letter-spacing:.06em;padding:3px 6px;border-radius:2px;background:var(--panel2);color:var(--dim);text-transform:uppercase;white-space:nowrap}
+.tag.m{background:#4a1520;color:#ff9aa6}.tag.i{background:#10301f;color:#8fe0b2}.tag.h{background:#3a2e10;color:var(--brass)}
+.bar{height:6px;background:var(--panel2);border-radius:3px;overflow:hidden;grid-column:1/-1}
+.bar i{display:block;height:100%;background:var(--blood)}
+.code{font:700 34px var(--mono);letter-spacing:.3em;color:var(--brass)}
+/* HUD */
+#hud{position:absolute;inset:0;pointer-events:none;font-family:var(--body)}
+#hud[hidden]{display:none}
+.hbox{position:absolute;background:rgba(11,10,16,.72);border:1px solid var(--line);padding:8px 12px;border-radius:3px;backdrop-filter:blur(3px)}
+#obj{left:12px;top:12px;min-width:210px}
+#obj .t{font:700 12px var(--mono);letter-spacing:.08em;color:var(--dim)}
+#obj .pips{display:flex;gap:5px;margin:6px 0 4px}
+#obj .pips i{width:22px;height:8px;background:var(--panel2);border:1px solid var(--line)}
+#obj .pips i.on{background:var(--ok);border-color:var(--ok)}
+#obj .s{font-size:13px;color:var(--dim)}
+#top{left:50%;top:12px;transform:translateX(-50%);text-align:center}
+#clock{font:900 30px/1 var(--display);letter-spacing:.06em}
+#phase{font:700 11px var(--mono);letter-spacing:.1em;color:var(--brass)}
+#role{right:12px;top:12px;text-align:right;max-width:260px}
+#role .r{font:900 26px/1 var(--display);letter-spacing:.06em;text-transform:uppercase}
+#role .r.m{color:var(--blood)}#role .r.i{color:var(--ok)}
+#role .c{font-size:13px;color:var(--dim)}
+#alive{font:700 12px var(--mono);color:var(--warn);margin-top:4px}
+#msgs{left:12px;bottom:92px;max-width:min(420px,60vw);display:grid;gap:4px;background:none;border:0;padding:0;backdrop-filter:none}
+#msgs div{background:rgba(11,10,16,.78);border-left:3px solid var(--brass);padding:6px 10px;font-size:14px;animation:fade 7s forwards}
+#msgs div.bad{border-color:var(--blood)}
+@keyframes fade{0%,80%{opacity:1}100%{opacity:0}}
+#abil{left:50%;bottom:14px;transform:translateX(-50%);display:flex;gap:8px;background:none;border:0;padding:0;backdrop-filter:none}
+.ab{width:74px;height:64px;position:relative;background:rgba(11,10,16,.8);border:1px solid var(--line);border-radius:3px;display:grid;place-items:center;text-align:center;overflow:hidden}
+.ab b{font:700 14px var(--mono);color:var(--brass);position:absolute;top:3px;left:6px}
+.ab span{font-size:11px;line-height:1.1;padding:14px 4px 0;color:var(--fg)}
+.ab i{position:absolute;left:0;right:0;bottom:0;background:rgba(226,57,74,.55);height:0}
+.ab.off{opacity:.45}
+.ab.used{opacity:.3}
+#cross{left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:rgba(255,255,255,.75);padding:0;border:0;backdrop-filter:none}
+#prompt{left:50%;top:58%;transform:translateX(-50%);text-align:center;font-weight:700;display:none}
+#prompt kbd{font:700 13px var(--mono);background:var(--brass);color:#16110a;padding:2px 7px;border-radius:2px;margin-right:6px}
+#prog{left:50%;top:64%;transform:translateX(-50%);width:220px;display:none;padding:0;height:10px;overflow:hidden}
+#prog i{display:block;height:100%;width:0;background:var(--brass)}
+#banner{left:50%;top:22%;transform:translateX(-50%);font:900 44px/1 var(--display);letter-spacing:.08em;text-transform:uppercase;text-align:center;display:none;background:none;border:0;backdrop-filter:none;text-shadow:0 2px 14px #000}
+#fx{position:absolute;inset:0;pointer-events:none;transition:opacity .2s;opacity:0}
+#ping{left:50%;top:50%;width:0;height:0;background:none;border:0;padding:0;backdrop-filter:none;display:none}
+#ping i{position:absolute;left:-14px;top:-150px;width:0;height:0;border:14px solid transparent;border-bottom:30px solid var(--blood);filter:drop-shadow(0 0 6px #000)}
+#dead{left:50%;top:38%;transform:translateX(-50%);text-align:center;display:none}
+#mapov{position:absolute;inset:0;display:none;place-items:center;background:rgba(5,4,8,.82)}
+#mapov canvas{max-width:92vw;max-height:84vh;border:1px solid var(--line);background:#100e16}
+#mg{position:absolute;inset:0;display:none;place-items:center;background:rgba(5,4,8,.55)}
+#mg .box{width:min(440px,92vw);background:var(--panel);border:1px solid var(--brass);padding:20px;border-radius:4px;text-align:center}
+#mg h3{margin:0 0 4px;font:900 26px var(--display);letter-spacing:.08em;text-transform:uppercase}
+#mg p{margin:0 0 14px;color:var(--dim);font-size:14px}
+#mgb{height:16px;background:var(--ink);border:1px solid var(--line);position:relative;margin:10px 0}
+#mgb i{position:absolute;top:0;bottom:0;background:var(--ok);opacity:.6}
+#mgb b{position:absolute;top:-3px;bottom:-3px;width:4px;background:var(--fg)}
+.seqrow{display:flex;gap:8px;justify-content:center;margin:12px 0;font:700 26px var(--mono)}
+.seqrow span{width:44px;height:44px;display:grid;place-items:center;background:var(--ink);border:1px solid var(--line);border-radius:3px}
+.seqrow span.ok{border-color:var(--ok);color:var(--ok)}
+#endc{max-width:620px;margin:8vh auto 0}
+#endc .big{font:900 clamp(44px,9vw,92px)/.9 var(--display);text-transform:uppercase;letter-spacing:.02em}
+#tip{position:absolute;right:12px;bottom:12px;font:500 11px var(--mono);color:var(--dim);text-align:right;background:none;border:0;padding:0;backdrop-filter:none}
+#resume{position:absolute;inset:0;display:none;place-items:center;background:rgba(5,4,8,.5);pointer-events:auto}
+@media (prefers-reduced-motion:reduce){#msgs div{animation:none}}
+</style>
+<div id="app">
+  <canvas id="gl"></canvas>
+
+  <section class="screen" id="menu">
+    <div class="wrap">
+      <header class="stack">
+        <div class="loop">EXPLORER → SÉCURISER → MODIFIER LE MANOIR → SABOTER → S’ÉCHAPPER</div>
+        <h1>Murder<em>Concept</em></h1>
+        <p class="lede">Mr. Bills est retrouvé inanimé après le premier toast. Le meurtrier est parmi les invités. Reprenez le contrôle du manoir, ouvrez les sorties et fuyez — ou chassez les survivants. Prototype jouable en vue FPS.</p>
+      </header>
+      <div class="cols">
+        <div class="card stack">
+          <div>
+            <label class="l" for="pseudo">Pseudo</label>
+            <input type="text" id="pseudo" maxlength="14" value="Invité" autocomplete="off">
+          </div>
+          <button class="btn primary" id="bSolo">Jouer contre des bots</button>
+          <div class="row"><button class="btn" id="bHost" style="flex:1">Héberger une partie</button></div>
+          <div class="row">
+            <input type="text" id="joinCode" maxlength="4" placeholder="CODE" style="flex:1;text-transform:uppercase;font-family:var(--mono);letter-spacing:.3em">
+            <button class="btn" id="bJoin">Rejoindre</button>
+          </div>
+          <div class="note" id="netNote">Le multijoueur passe par la salle partagée de l’artifact : l’hôte simule la partie, les bots complètent l’effectif.</div>
+        </div>
+        <div class="card">
+          <h2>Commandes</h2>
+          <dl class="keys">
+            <dt>ZQSD / WASD</dt><dd>Se déplacer</dd>
+            <dt>Souris · flèches</dt><dd>Regarder (clic = capturer la souris)</dd>
+            <dt>Maj · Ctrl/C · Espace</dt><dd>Courir (bruyant) · s’accroupir (discret) · sauter</dd>
+            <dt>E</dt><dd>Interagir : portes, meubles, objectifs, levier, cachette</dd>
+            <dt>Clic G · Clic D · R</dt><dd>Meurtrier : tuer de près · attrape à distance (bruyant) · saboter</dd>
+            <dt>A / Q · F</dt><dd>Capacité rechargeable · capacité unique</dd>
+            <dt>M</dt><dd>Plan du manoir</dd>
+          </dl>
+          <p class="note" style="margin-top:12px">Clavier + souris requis. Aucune réunion : les cadavres, bruits, portes et sabotages sont vos seuls indices.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="lobby" hidden>
+    <div class="wrap">
+      <div class="row" style="justify-content:space-between;align-items:flex-end">
+        <div class="stack" style="gap:4px">
+          <div class="loop" id="lobMode">SALON</div>
+          <div class="code" id="lobCode">----</div>
+        </div>
+        <button class="btn" id="bLeave">Quitter</button>
+      </div>
+      <div class="cols">
+        <div class="card">
+          <h2>Invités</h2>
+          <ul class="plist" id="plist"></ul>
+          <p class="note" id="lobInfo" style="margin-bottom:0"></p>
+        </div>
+        <div class="stack">
+          <div class="card stack">
+            <h2>Vos votes</h2>
+            <div>
+              <label class="l">Camp préféré</label>
+              <div class="seg" id="segPref" role="group" aria-label="Camp préféré">
+                <button class="i" data-v="i" aria-pressed="false">Innocent</button>
+                <button data-v="n" aria-pressed="true">Indifférent</button>
+                <button class="m" data-v="m" aria-pressed="false">Meurtrier</button>
+              </div>
+            </div>
+            <div>
+              <label class="l">Catégorie de personnage (le perso est tiré au sort dedans)</label>
+              <div class="seg" id="segCat" role="group" aria-label="Catégorie">
+                <button data-v="fuite" aria-pressed="false">Fuite</button>
+                <button data-v="enq" aria-pressed="false">Enquête</button>
+                <button data-v="deb" aria-pressed="false">Débarras</button>
+                <button data-v="any" aria-pressed="true">Au hasard</button>
+              </div>
+            </div>
+            <p class="note" id="catNote"></p>
+          </div>
+          <div class="card stack" id="hostBox">
+            <h2>Partie</h2>
+            <div>
+              <label class="l" for="total">Joueurs au total (bots en complément) : <span id="totalV">8</span></label>
+              <input type="range" id="total" min="4" max="15" value="8" style="width:100%">
+            </div>
+            <button class="btn primary" id="bStart">Lancer la partie</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="endscr" hidden style="background:rgba(5,4,8,.88)">
+    <div class="card stack" id="endc">
+      <div class="loop" id="endWho"></div>
+      <div class="big" id="endTitle"></div>
+      <p id="endWhy" class="lede"></p>
+      <div id="endList" class="note"></div>
+      <div class="row"><button class="btn primary" id="bAgain">Retour au salon</button></div>
+    </div>
+  </section>
+
+  <div id="hud" hidden>
+    <div class="hbox" id="obj"><div class="t">SÉCURISATIONS — 5 REQUISES</div><div class="pips" id="pips"></div><div class="s" id="objS"></div></div>
+    <div class="hbox" id="top"><div id="clock">10:00</div><div id="phase">EXPLORATION</div></div>
+    <div class="hbox" id="role"><div class="r" id="roleR"></div><div class="c" id="roleC"></div><div id="alive"></div></div>
+    <div class="hbox" id="cross"></div>
+    <div class="hbox" id="prompt"></div>
+    <div class="hbox" id="prog"><i></i></div>
+    <div class="hbox" id="banner"></div>
+    <div class="hbox" id="ping"><i></i></div>
+    <div class="hbox" id="dead"><div class="big" style="font:900 40px var(--display);color:var(--blood)">VOUS ÊTES MORT</div><div class="note">Fantôme : vous pouvez encore avancer les objectifs (plus lentement). Plus de pouvoirs, plus de communication.</div></div>
+    <div id="msgs" class="hbox"></div>
+    <div id="abil" class="hbox"></div>
+    <div id="tip">M : plan · Échap : libérer la souris</div>
+  </div>
+  <div id="fx"></div>
+  <div id="mg"><div class="box" id="mgbox"></div></div>
+  <div id="mapov"><canvas id="mapc" width="900" height="560"></canvas></div>
+  <div id="resume"><div class="btn primary" style="pointer-events:none">Cliquez pour reprendre</div></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
