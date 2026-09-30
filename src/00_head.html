@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>Murder Concept</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -99,8 +100,18 @@ label.l{font:700 12px var(--mono);letter-spacing:.08em;color:var(--dim);text-tra
 #ping{left:50%;top:50%;width:0;height:0;background:none;border:0;padding:0;backdrop-filter:none;display:none}
 #ping i{position:absolute;left:-14px;top:-150px;width:0;height:0;border:14px solid transparent;border-bottom:30px solid var(--blood);filter:drop-shadow(0 0 6px #000)}
 #dead{left:50%;top:38%;transform:translateX(-50%);text-align:center;display:none}
-#mapov{position:absolute;inset:0;display:none;place-items:center;background:rgba(5,4,8,.82)}
-#mapov canvas{max-width:96vw;max-height:84vh;border:1px solid var(--line);background:#100e16}
+#mapov{position:absolute;inset:0;display:none;place-items:center;background:rgba(5,4,8,.86);z-index:4}
+#mapbox{width:min(1240px,98vw);height:min(720px,96%);display:grid;grid-template-rows:auto 1fr auto;gap:8px;padding:10px;background:var(--panel);border:1px solid var(--line);border-radius:4px}
+#maptools{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
+#maptools .seg button{padding:7px 10px;font-size:13px}
+#maptools .btn{padding:7px 12px;font-size:13px}
+.mlay{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--dim)}
+.mlay label{display:flex;gap:4px;align-items:center;cursor:pointer}
+#mapwrap{position:relative;min-height:0;background:#0d0c12;border:1px solid var(--line);overflow:hidden}
+#mapwrap canvas{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair}
+#maptip{position:absolute;pointer-events:none;background:rgba(11,10,16,.94);border:1px solid var(--brass);padding:6px 9px;font-size:12px;border-radius:3px;display:none;max-width:260px;line-height:1.35;z-index:2}
+#maptip b{color:var(--brass);font-family:var(--mono);letter-spacing:.04em}
+
 #mg{position:absolute;inset:0;display:none;place-items:center;background:rgba(5,4,8,.55)}
 #mg .box{width:min(440px,92vw);background:var(--panel);border:1px solid var(--brass);padding:20px;border-radius:4px;text-align:center}
 #mg h3{margin:0 0 4px;font:900 26px var(--display);letter-spacing:.08em;text-transform:uppercase}
@@ -268,7 +279,16 @@ label.l{font:700 12px var(--mono);letter-spacing:.08em;color:var(--dim);text-tra
   <div id="fx"></div>
   <div id="reveal"><div class="rv"><div class="rvk" id="rvK"></div><div class="rvr" id="rvR"></div><div class="rvc" id="rvC"></div><p id="rvG"></p><div class="rvab" id="rvA"></div><div class="note">Cliquez ou appuyez sur une touche pour commencer</div></div></div>
   <div id="mg"><div class="box" id="mgbox"></div></div>
-  <div id="mapov"><canvas id="mapc" width="1180" height="340"></canvas></div>
+  <div id="mapov"><div id="mapbox">
+    <div id="maptools">
+      <div class="seg" id="mapLv" role="group" aria-label="Niveau"><button data-lv="all" aria-pressed="true">Tous</button><button data-lv="-1" aria-pressed="false">Sous-sol</button><button data-lv="0" aria-pressed="false">Rez-de-chaussée</button><button data-lv="1" aria-pressed="false">Étage</button></div>
+      <div class="seg" id="mapPin" role="group" aria-label="Marqueur"><button data-pin="danger" aria-pressed="true">✖ Danger</button><button data-pin="suspect" aria-pressed="false">? Suspect</button><button data-pin="safe" aria-pressed="false">✓ Sûr</button><button data-pin="note" aria-pressed="false">● Note</button><button data-pin="erase" aria-pressed="false">Gomme</button></div>
+      <div class="mlay" id="mapLay"><label><input type="checkbox" data-l="obj" checked>Objectifs</label><label><input type="checkbox" data-l="exit" checked>Sorties</label><label><input type="checkbox" data-l="stair" checked>Escaliers</label><label><input type="checkbox" data-l="door" checked>Portes</label><label><input type="checkbox" data-l="elec" checked>Électricité</label><label><input type="checkbox" data-l="body" checked>Corps</label><label><input type="checkbox" data-l="trail" checked>Ma trace</label><label><input type="checkbox" data-l="pin" checked>Marqueurs</label></div>
+      <div class="row"><button class="btn" id="mapCenter" type="button">Ma position</button><button class="btn" id="mapClear" type="button">Effacer marqueurs</button><button class="btn" id="mapClose" type="button">Fermer (M)</button></div>
+    </div>
+    <div id="mapwrap"><canvas id="mapc"></canvas><div id="maptip"></div></div>
+    <div class="note" id="maphint">Survolez une pièce pour ses infos · clic = poser un marqueur · clic droit = retirer · molette = zoom et glisser = déplacer (vue d’un niveau)</div>
+  </div></div>
   <div id="resume"><div class="btn primary" style="pointer-events:none">Cliquez pour reprendre</div></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>

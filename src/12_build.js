@@ -177,7 +177,7 @@ function buildWorld(scene){
     }else{
       box(s.x0-.05,s.ya,s.z0,s.x0+.05,1.1,s.z1-lead,sideM,true);box(s.x1-.05,s.ya,s.z0,s.x1+.05,1.1,s.z1-lead,sideM,true);
     }
-    keep(s.x0-.3,s.z0-.3,s.x1+.3,s.z1+.3,s.ya<0?0:s.ya);
+    keep(s.x0-.3,s.z0-.3,s.x1+.3,s.z1+.3,0);if(s.ya<0)keep(s.x0-.3,s.z0-.3,s.x1+.3,s.z1+.3,s.ya);
   });
   // ---------- doors ----------
   DOORS.forEach((d,i)=>{
@@ -332,7 +332,7 @@ function buildWorld(scene){
     const o={room:-2,tl:i,x:t.x,y:t.y+.45,z:t.z,col:t.col,int:t.int,dist:t.dist,fl:.04,cone:0,on:true,ph:Math.random()*6.28,lvl:rm.y,lv:rm.lv,cur:1,nofuse:t.n==='Bougeoir'};
     const base=new THREE.Mesh(new THREE.CylinderGeometry(.08,.12,.3,6),lam(0x2a2018));base.position.set(t.x,t.y+.15,t.z);grp.add(base);
     const b=new THREE.Mesh(new THREE.SphereGeometry(.1,8,6),new THREE.MeshBasicMaterial({color:o.col}));b.position.set(o.x,o.y,o.z);grp.add(b);o.bulb=b;
-    W.lamps.push(o);W.tlamps.push({i,x:t.x,z:t.z,y:rm.y,n:t.n,lamp:o});keep(t.x-.7,t.z-.7,t.x+.7,t.z+.7,rm.y);
+    W.lamps.push(o);W.tlamps.push({i,x:t.x,z:t.z,y:rm.y,n:t.n,lamp:o});
   });
   GARDEN_LAMPS.forEach(g=>{
     const o={room:-1,x:g[0],y:g[1],z:g[2],col:0xb8c8ff,int:.9,dist:15,fl:.05,cone:0,on:true,ph:Math.random()*6.28,lvl:0,cur:1};
@@ -358,108 +358,13 @@ function buildWorld(scene){
     if(d.ax==='x')keep(d.a,d.f-p,d.b,d.f+p,y);else keep(d.f-p,d.a,d.f+p,d.b,y);});
   WINS.forEach(w=>{if(w.ax==='x')keep(w.a,w.f-.8,w.b,w.f+.8,0);else keep(w.f-.8,w.a,w.f+.8,w.b,0);});
   EXITS.forEach(e=>{if(e.ax==='x')keep(e.a-.3,e.f-1.6,e.b+.3,e.f+1.6,0);else keep(e.f-1.6,e.a-.3,e.f+1.6,e.b+.3,0);});
-  STAIRS.forEach(s=>{const y=s.ya<0?0:s.ya;keep(s.x0-.3,s.z0-2.4,s.x1+.3,s.z0,y);keep(s.x0-.3,s.z1,s.x1+.3,s.z1+2.4,y);});
+  STAIRS.forEach(s=>{keep(s.x0-.3,s.z0-2.4,s.x1+.3,s.z0,s.ya);keep(s.x0-.3,s.z1,s.x1+.3,s.z1+2.4,s.yb);});
   function blocked(x0,z0,x1,z1,y){
-    for(const k of KEEP){if(Math.abs(k.y-y)<2.5&&x1+.15>k.x0&&x0-.15<k.x1&&z1+.15>k.z0&&z0-.15<k.z1)return true;}
+    for(const k of KEEP){if(Math.abs(k.y-y)<2.5&&x1+.08>k.x0&&x0-.08<k.x1&&z1+.08>k.z0&&z0-.08<k.z1)return true;}
     return false;
   }
-  const DK={n:0,skip:0,log:[]};window.__DK=DK;
-  function D(x,z,w,d,h,c,y0,o){
-    y0=y0||0;o=o||{};const rm=roomAt(x,z,y0+.1),y=rm?rm.y:y0;
-    const coll=h>.3&&o.c!==false&&!o.yy;
-    if(coll&&blocked(x-w/2,z-d/2,x+w/2,z+d/2,y)){DK.skip++;DK.log.push(['D',x,z,y]);return null;}
-    const mat=o.emis?new THREE.MeshBasicMaterial({color:c}):lam(c,{map:tx.noise});
-    const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y+(o.yy||0)+h/2,z);if(o.ry)m.rotation.y=o.ry;grp.add(m);
-    if(coll)addCol(x-w/2,y,z-d/2,x+w/2,y+h,z+d/2,true);DK.n++;return m;
-  }
-  function Cy(x,z,r,h,c,y0,o){
-    y0=y0||0;o=o||{};const rm=roomAt(x,z,y0+.1),y=rm?rm.y:y0;
-    if(o.c!==false&&h>.3&&blocked(x-r,z-r,x+r,z+r,y)){DK.skip++;DK.log.push(['C',x,z,y]);return null;}
-    const m=new THREE.Mesh(new THREE.CylinderGeometry(o.r2===undefined?r:o.r2,r,h,o.seg||10),o.emis?new THREE.MeshBasicMaterial({color:c}):lam(c,{map:tx.noise}));
-    m.position.set(x,y+(o.yy||0)+h/2,z);grp.add(m);if(o.c!==false&&h>.3)addCol(x-r,y,z-r,x+r,y+h,z+r,true);DK.n++;return m;
-  }
-  function Shelf(x0,z0,x1,z1,face,map,y0){ // bookshelf/wine rack against a wall; face: 'n','s','e','w' = direction the front looks at
-    const w=Math.abs(x1-x0),d=Math.abs(z1-z0),cx=(x0+x1)/2,cz=(z0+z1)/2;
-    const m=D(cx,cz,w,d,2.5,0x3b2618,y0);if(!m)return;
-    const y=m.position.y-1.25,fw=face==='n'||face==='s'?w:d;
-    const pl=new THREE.Mesh(new THREE.PlaneGeometry(fw-.1,2.2),lam(0xffffff,{map:tx[map||'books']}));
-    const uv=pl.geometry.attributes.uv;for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)*fw/1.6,uv.getY(i)*1.4);
-    const off=(face==='n'||face==='s'?d:w)/2+.02;
-    if(face==='s'){pl.position.set(cx,y+1.35,cz+off);}else if(face==='n'){pl.position.set(cx,y+1.35,cz-off);pl.rotation.y=Math.PI;}
-    else if(face==='e'){pl.position.set(cx+off,y+1.35,cz);pl.rotation.y=Math.PI/2;}else{pl.position.set(cx-off,y+1.35,cz);pl.rotation.y=-Math.PI/2;}
-    grp.add(pl);
-  }
-  function Frame(x,y,z,face,w,h){ // painting
-    const m=new THREE.Mesh(new THREE.PlaneGeometry(w||.9,h||1.2),lam(0xffffff,{map:tx.frame,emissive:0x1a1208}));m.position.set(x,y,z);
-    m.rotation.y={s:0,n:Math.PI,e:Math.PI/2,w:-Math.PI/2}[face];grp.add(m);
-  }
-  const Em=(x,y,z,w,h,d,c)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshBasicMaterial({color:c}));m.position.set(x,y,z);grp.add(m);return m;};
   W.fire=[];
-  // -- Bibliothèque
-  Shelf(1,.2,12,1,'s');Shelf(.2,1,1,6,'e');D(7,4.6,2,1,.78,0x4a3020);D(4,4.5,1,1,.9,0x552233);D(10,7.4,1,1,.9,0x26443a);Cy(11.3,4,.35,1.2,0x2a4a6a);D(5,8.3,2.6,.5,.4,0x2a1a10,0,{c:false});
-  Frame(6.5,2.3,9.83,'n');
-  // -- Bureau
-  D(16.6,3.2,2.4,1.1,.8,0x4a3a2a);D(16.6,2.3,.6,.6,.45,0x33261c,0,{c:false});Em(16.9,1.35,3,.25,.3,.25,0xa8ff98);D(18.6,7.2,1.2,.7,1.6,0x33261c);D(14.2,6.6,.8,1.5,1.9,0x33261c);Shelf(13.2,4.2,14,6,'e');
-  Cy(19.6,3.4,.4,1.0,0x3a2a1a);Frame(17,2.4,7.83,'n');
-  // -- Fumoir
-  D(22.5,2,1.3,1.3,.9,0x5a2a2a);D(25.3,2,1.3,1.3,.9,0x5a2a2a);Cy(24,3.3,.5,.7,0x3a2a1a);Shelf(21.3,7,26.8,7.8,'n','wine');
-  const fp1=Em(24,.8,.3,1.4,.6,.2,0xff7a30);W.fire.push(fp1);D(24,.45,2.4,.6,1.6,0x33261c);
-  // -- Galerie des portraits
-  for(let i=0;i<6;i++){Frame(14.5+i*2.4,2.0,8.15,'s',.8,1.0);Frame(14.5+i*2.4,2.0,10.85,'n',.8,1.0);}
-  D(14,9.5,.6,.6,1.6,0x8a8578);D(26,9.5,.6,.6,1.6,0x8a8578);
-  // -- Garage
-  D(36,2.4,4.2,1.9,1.1,0x7a1f25);D(36,2.4,2.4,1.6,.5,0x1a1a1f,0,{yy:1.1});D(40.4,10,4.0,1.9,1.1,0x1f3a6a,0,{ry:0});D(43.4,7.5,.8,3,1.0,0x5a4a3a);
-  Cy(29,9.8,.45,.9,0x2a4a7a);Cy(30.2,10.6,.45,.9,0x7a2a2a);D(28.8,4,.6,3,.05,0x181818,0,{c:false});Em(31,3.9,.3,1.6,.12,.1,0xbcd8ff);
-  D(42.6,1.8,1.6,1.0,1.0,0x5a4632);Cy(34,9.8,.4,.8,0x3a3a3a);
-  // -- Salon
-  W.fire.push(Em(3.5,1.0,10.35,1.6,.8,.3,0xff8a30));D(3.5,10.7,2.6,.7,1.7,0x5a4a44);
-  D(5,15.5,1.6,.9,.45,0x3a2a1a);D(3.5,17.8,1.0,1.0,.85,0x4a2a30);D(9.5,19,1.0,1.0,.85,0x4a2a30);Shelf(6,21.2,12.6,21.8,'n');D(11.6,16.5,.7,.7,1.1,0x33261c);Frame(1,2.4,19,'e');Frame(6,2.4,10.3,'s');
-  // -- Grand hall
-  D(23.5,14,.8,.8,3.8,0x8a8578);D(14.6,21,.7,.7,3.8,0x8a8578);D(25.4,21.2,.7,.7,3.8,0x8a8578);D(25.6,12.5,.6,.6,1.9,0x5a3a22,0,{c:true});
-  D(20,17,3.6,9,.03,0x7a1222,0,{c:false});Cy(21.6,21.8,.5,1.6,0x9a9588);Cy(18.4,21.8,.5,1.6,0x9a9588);
-  Frame(20,3,11.25,'s',1.6,1.2);Frame(20,3,22.75,'n',1.6,1.2);Frame(13.25,3,20,'e',1.2,1.6);Frame(26.75,3,20,'w',1.2,1.6);
-  // chandelier
-  {const c=new THREE.Group();const r=new THREE.Mesh(new THREE.TorusGeometry(1,.06,6,16),new THREE.MeshBasicMaterial({color:0xffe0a0}));r.rotation.x=Math.PI/2;c.add(r);const ch=new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,.9,4),lam(0x222222));ch.position.y=.45;c.add(ch);c.position.set(20,6.6,17);grp.add(c);}
-  // -- Salle à manger
-  D(36.3,15,3.2,1.4,.85,0x4a3020);D(29.5,22.8,2.2,.7,1.0,0x33261c);D(36.3,13.5,.5,.5,.5,0x5a3a22);D(36.3,16.5,.5,.5,.5,0x5a3a22);Em(36.3,1.0,15,.12,.3,.12,0xffe0a0);
-  Frame(33,2.5,12.25,'s',1.6,1.0);Shelf(37.3,22.6,38.6,23.8,'w','wine');
-  // -- Cellier
-  Shelf(39.3,20,40,23.5,'e');D(43.3,22,1,1.4,1.4,0x7a5a3a);D(43,16,1,1,1.0,0x7a5a3a);Cy(39.7,22.6,.4,.9,0x6a4a2a);
-  // -- Cuisine
-  D(33.5,27.4,2.6,1.0,.95,0x8a8f96);D(38.5,27.4,1.8,1.0,.95,0x8a8f96);D(30.5,33.4,4,.7,.95,0x8a8f96);D(37,33.4,3,.7,.95,0x8a8f96);D(43.3,33.3,1.2,1.2,1.6,0xc8ccd0);D(35.6,24.7,1.6,.6,1.0,0x8a8f96);
-  Cy(33.5,27.4,.3,.5,0x6a6a72,.95,{c:false});
-  // -- Serre
-  for(let i=0;i<5;i++){D(14.8+i*2.3,25.4,1.4,.8,.5,0x3a2a1a);Cy(14.8+i*2.3,25.4,.45,1.3,0x1e5a2a,.5,{c:false,r2:.05,seg:6});}
-  for(let i=0;i<4;i++){D(16+i*2.6,32.6,1.4,.8,.5,0x3a2a1a);Cy(16+i*2.6,32.6,.5,1.6,0x2a7a3a,.5,{c:false,r2:.05,seg:6});}
-  Cy(25.4,25,.6,1.6,0x2a6a3a);Cy(14.6,31,.5,1.5,0x2a6a3a);Cy(20,30.5,.9,.5,0x22404a,0,{c:false});Cy(20,30.5,.25,.9,0x4a8aa0,.5,{c:false,emis:1});
-  // -- Cinéma
-  W.fire.push(Em(11,1.9,33.8,3,1.8,.1,0x9ab0ff));
-  for(let r=0;r<2;r++)for(let c=0;c<3;c++)D(6.5+c*1.6,25+r*1.7,1.1,.9,.9,0x5a1a2a);D(12.3,23,1.2,1.2,1.8,0x7a2a1a);
-  // -- Suite (étage)
-  D(17,32,2.4,2.2,.6,0x5a2a3a,4);D(17,30.7,2.4,.3,1.2,0x3a1a24,4);D(25.8,25,1.2,.8,1.8,0x3a2a1e,4);D(24.3,25.3,1.6,.6,.9,0x4a3a2a,4);D(14.2,25.4,.8,1.6,1.9,0x33261c,4);Cy(23.6,31.5,.5,.8,0x2a2a4a,4);
-  // -- Salle de musique
-  D(31,30,2.2,1.2,.9,0x2a2a30,4);Cy(41,26,.45,.9,0x6a2a2a,4);Cy(41.8,27.2,.4,.6,0x2a6a6a,4);D(29,25.2,1.0,.6,1.6,0x16161a,4);D(42.5,33,1,.6,1.6,0x16161a,4);
-  // -- Salle de jeux
-  D(30,21.5,1.6,1.6,.8,0x5a3a22,4);D(28.5,21.6,.5,.5,.5,0x3a2414,4);D(31.5,21.6,.5,.5,.5,0x3a2414,4);D(35,22.5,3,.7,1.0,0x33261c,4);Cy(28.2,13.5,.4,1.0,0x7a2a2a,4);
-  // -- Palier / chambres
-  Cy(40.2,22.8,.35,.9,0x2a5a2a,4);D(6,14,2.2,2.0,.6,0x2a3a5a,4);D(11.5,11,1,1.6,1.9,0x33261c,4);D(2,19.6,1.6,.7,.9,0x4a3a2a,4);
-  D(3,28.5,2,1.6,.6,0x5a5a3a,4);D(9,28.5,2,1.6,.6,0x5a3a3a,4);D(6,32.5,1.6,.6,.9,0x4a3a2a,4);D(12,26,.8,1.6,1.9,0x33261c,4);
-  // -- Sous-sol : cave, chaufferie, tunnel, labo, crypte, archives, garde-manger
-  Shelf(27.3,13.2,35,14,'s','wine',-4);Shelf(27.3,22,35,22.8,'n','wine',-4);Shelf(38,16,38.7,22,'w','wine',-4);
-  for(let i=0;i<4;i++)Cy(30+i*1.6,17+((i%2)*1.5),.55,1.2,0x5a3a1e,-4);D(33,18,2.2,1.0,.85,0x33261c,-4);
-  Cy(41.5,21,1.3,3.2,0x6a6a72,-4);Cy(41.5,21,.9,.3,0xff6a20,-4,{c:false,emis:1,yy:2.5});D(43,14,1,1.6,.8,0x1a1a1a,-4);D(40,22,1.2,1,.8,0x1a1a1a,-4);Em(40.4,-3.4,14,.2,.3,.05,0xff5a10);
-  D(15.5,15.9,.9,.8,1.0,0x5a4a3a,-4);D(25.4,14.5,.8,.8,.9,0x5a4a3a,-4);Em(20,-2.4,14.15,.3,.15,.05,0xff2020);
-  D(3,12,1.6,.9,.9,0x9aa0a8,-4);D(6,19.5,1.6,.9,.9,0x9aa0a8,-4);D(10,12.5,1.0,1.0,.9,0x9aa0a8,-4);Cy(9.6,20,.4,1.4,0x40ff90,-4,{emis:1,seg:12});Cy(4,19.4,.35,1.3,0x40ff90,-4,{emis:1,seg:12});Em(3,-2.6,12,.7,.4,.05,0x70ffb0);
-  for(const x of[15.5,24.5])for(const z of[19,23])Cy(x,z,.45,3.6,0x55555a,-4);D(18,24.6,2.2,1,.8,0x4a4a52,-4);D(22,24.6,2.2,1,.8,0x4a4a52,-4);
-  Em(17.6,-3.0,24.5,.12,.2,.12,0xffb040);Em(21.6,-3.0,24.5,.12,.2,.12,0xffb040);
-  Shelf(.3,24,1,31,'e','books',-4);Shelf(5,33,11,33.8,'n','books',-4);D(8,25,2,1,.9,0x4a3a2a,-4);D(12,30,.8,1.4,1.4,0x7a7a82,-4);
-  D(34,27,3,1,.95,0xc8d0d8,-4);D(40,27,1.6,1.8,1.9,0xc8d0d8,-4);D(32,33,1,1,1.0,0xc8d0d8,-4);D(43,31,1,1.6,1.9,0xc8d0d8,-4);
-  // -- salle secrète
-  D(16,28,1.4,1.0,.9,0x3a2a1e,-4);D(24,32.6,1.6,1.0,1.0,0x5a4424,-4);D(14.6,30,.8,1.4,1.4,0x5a4424,-4);Cy(20,30,.7,.9,0x2a2a32,-4);Cy(20,30,.5,.12,0xff4060,-4,{c:false,emis:1,yy:.9});
-  for(const x of[15,25])for(const z of[27.5,33])Cy(x,z,.15,1.4,0xd8d0b0,-4,{c:false,seg:6});Em(17,-2.4,26.2,.2,.15,.05,0xff9a40);
-  // -- extérieur : bancs et buissons dans le jardin
-  [[-3,8],[-3,26],[47,14],[47,20],[10,-3],[31,-3],[8,37],[32,37]].forEach(p=>{Cy(p[0],p[1],.9,.9,0x143a1a,0,{c:false,seg:7});});
-  console.log('decor',DK.n,'skipped',DK.skip);
+  const DK=buildDecor({grp,lam,tx,blocked,W});
   gBuild();
   return W;
 }

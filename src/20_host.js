@@ -6,7 +6,8 @@ const BASE={walk:3.4,run:5.6,crouch:1.7};
 function vfx(f,x,y,z,o){ev(Object.assign({k:'f',f,x:r1(x),y:r1(y),z:r1(z)},o||{}));}
 function hit(p){ev({k:'h',to:p.i});}
 function ev(o){o.i=++G.eid;o.t0=G.t;G.evs.push(o);}
-function snd(s,x,z,y,r){ev({k:'s',s,x:r1(x),z:r1(z),y:r1(y),r});}
+function snd(s,x,z,y,r){ev({k:'s',s,x:r1(x),z:r1(z),y:r1(y),r});if(['piano','gramo','bell','tv','rg','shot','scream'].includes(s))G.noiseLast={x,z,y,t:G.t,k:s};
+  if(s==='rg'||s==='shot')for(const b of G.P)if(b.bot&&b.alive&&b.role!=='m'&&hyp(b.x,b.z,x,z)<r*.6)b.ai.knows=true;}
 function say(p,t,bad){ev({k:'m',to:p?p.i:-1,t,b:bad?1:0});}
 const pd=(p,x,z)=>hyp(p.x,p.z,x,z);
 const fwd=yw=>[-Math.sin(yw),-Math.cos(yw)];
@@ -39,7 +40,7 @@ function newGame(cfg){
   G={t:0,eid:0,evs:[],P,mur:P[mi],phase:0,over:false,win:null,why:'',limit:600,
     ob:OBJS.map((o,i)=>({st:0,func:func.includes(i),prev:0})),done:0,
     ea,exUsed:new Set(),zones:[],zid:0,bodies:[],links:[],nextPv:0,nextSnap:0,peerIdx:new Map(),
-    lights:(1<<ROOMS.length)-1,vents:0,tl:(1<<WORLD.tlamps.length)-1,fuse:[1,1,1],started:Date.now()};
+    lights:(1<<ROOMS.length)-1,vents:0,tl:(1<<WORLD.tlamps.length)-1,fuse:[1,1,1],fuseT:[0,0,0],noiseLast:null,started:Date.now()};
   P.forEach(p=>{if(p.peer)G.peerIdx.set(p.peer,p.i);});
   // reset world state
   WORLD.doors.forEach(d=>{d.state=1;d.col.on=true;d.barU=0;});
@@ -144,7 +145,7 @@ function hostAct(p,a){
 }
 function doneObj(p,i,ghost){
   const o=G.ob[i],d=OBJS[i];if(!o||p.role==='m'&&!ghost&&false)return;
-  if(p.role==='m'||o.st!==0||!o.func||pd(p,d.x,d.z)>4||Math.abs(p.y-d.y)>2||G.phase>1)return;
+  if(p.role==='m'||o.st!==0||!o.func||pd(p,d.x,d.z)>4||Math.abs(p.y-d.y)>2||G.phase!==0)return;
   o.st=1;G.done++;snd('chime',d.x,d.z,d.y,22);say(null,`${d.n} sécurisé (${G.done}/5).`);
   if(G.done>=5&&G.phase===0){G.phase=1;G.exitsT=G.t;snd('alarm',20,15,0,80);say(null,'Sécurisation terminée ! 3 sorties sont actives : trouvez un levier et ouvrez-les.');}
 }
@@ -160,18 +161,23 @@ function hideAct(p,i){
   let best=null,bd=2.0;for(const h of WORLD.hides){const d=pd(p,h.x,h.z);if(d<bd&&Math.abs(h.y-p.y)<2){bd=d;best=h;}}
   if(!best)return;p.hidden=best.i;p.hideU=G.t+10;p.x=best.x;p.z=best.z;p.y=best.y;p.tpN++;p.tpTo=[best.x,best.y,best.z];snd('door',best.x,best.z,best.y,6);
 }
-function sabotage(p){
-  if(p.role!=='m'||G.t<p.cdS)return;
+function sabPick(p){
   const nFuse=G.fuse.filter(f=>!f).length,nDoor=WORLD.doors.filter(d=>d.state===3).length,nLev=WORLD.exits.filter(e=>e.jam).length,nObj=G.ob.filter(o=>o.st===2).length;
-  if(nObj+nFuse+nDoor+nLev>=4){say(p,'Déjà quatre sabotages actifs.',1);return;}
+  if(nObj+nFuse+nDoor+nLev>=4)return {full:true};
   let best=null,bd=9;
   const cand=(d,fn)=>{if(d<bd){bd=d;best=fn;}};
-  if(G.phase===0&&nObj<2)OBJS.forEach((d,i)=>{const dd=pd(p,d.x,d.z);if(dd<3&&Math.abs(p.y-d.y)<2&&G.ob[i].st===0)cand(dd,()=>{G.ob[i].st=2;snd('sab',d.x,d.z,d.y,42);say(p,'Sabotage : '+d.n+'.');});});
-  WORLD.fuses.forEach((f,i)=>{const dd=pd(p,f.x,f.z);if(dd<3&&Math.abs(p.y-f.y)<2&&G.fuse[i]&&nFuse<1)cand(dd,()=>{G.fuse[i]=0;snd('sab',f.x,f.z,f.y,48);vfx('bar',f.x,f.y,f.z);say(p,'Courant coupé au niveau '+(f.lv<0?'sous-sol':f.lv>0?'étage':'rez-de-chaussée')+'.');});});
-  WORLD.doors.forEach((d,i)=>{const dd=pd(p,d.cx,d.cz);if(dd<2.4&&Math.abs(p.y-d.y)<2&&d.state<2&&nDoor<2)cand(dd+.4,()=>{d.state=3;d.col.on=true;snd('sab',d.cx,d.cz,d.y,34);vfx('bar',d.cx,d.y,d.cz);say(p,'Porte coincée.');});});
-  if(G.phase===1)WORLD.exits.forEach(e=>{const dd=pd(p,e.lx,e.lz);if(dd<2.8&&e.active&&!e.open&&!e.jam)cand(dd,()=>{e.jam=true;snd('sab',e.lx,e.lz,0,44);say(p,'Levier coincé.');});});
-  if(!best){say(p,'Rien à saboter ici (objectif, boîte à fusibles, porte ou levier).',1);return;}
-  best();p.cdS=G.t+25;
+  if(G.phase===0&&nObj<2)OBJS.forEach((d,i)=>{const dd=pd(p,d.x,d.z);if(dd<3&&Math.abs(p.y-d.y)<2&&G.ob[i].st===0)cand(dd,()=>{G.ob[i].st=2;G.ob[i].sabT=G.t;snd('sab',d.x,d.z,d.y,42);say(p,'Sabotage : '+d.n+'.');});});
+  WORLD.fuses.forEach((f,i)=>{const dd=pd(p,f.x,f.z);if(dd<3&&Math.abs(p.y-f.y)<2&&G.fuse[i]&&nFuse<1)cand(dd,()=>{G.fuse[i]=0;G.fuseT[i]=G.t;snd('sab',f.x,f.z,f.y,48);vfx('bar',f.x,f.y,f.z);say(p,'Courant coupé au niveau '+(f.lv<0?'sous-sol':f.lv>0?'étage':'rez-de-chaussée')+'.');});});
+  WORLD.doors.forEach((d,i)=>{const dd=pd(p,d.cx,d.cz);if(dd<2.4&&Math.abs(p.y-d.y)<2&&d.state<2&&nDoor<2)cand(dd+.4,()=>{d.state=3;d.col.on=true;d.sabT=G.t;snd('sab',d.cx,d.cz,d.y,34);vfx('bar',d.cx,d.y,d.cz);say(p,'Porte coincée.');});});
+  if(G.phase===1)WORLD.exits.forEach(e=>{const dd=pd(p,e.lx,e.lz);if(dd<2.8&&e.active&&!e.open&&!e.jam)cand(dd,()=>{e.jam=true;e.jamT=G.t;snd('sab',e.lx,e.lz,0,44);say(p,'Levier coincé.');});});
+  return best?{fn:best}:null;
+}
+function sabotage(p){
+  if(p.role!=='m'||G.t<p.cdS)return;
+  const s=sabPick(p);
+  if(s&&s.full){say(p,'Déjà quatre sabotages actifs.',1);return;}
+  if(!s){say(p,'Rien à saboter ici (objectif, boîte à fusibles, porte ou levier).',1);return;}
+  s.fn();p.cdS=G.t+25;
 }
 function nearestOther(p,r){let b=null,bd=r;for(const t of G.P){if(t===p||!t.alive||t.escaped||t.hidden>=0||Math.abs(t.y-p.y)>2)continue;const d=pd(p,t.x,t.z);if(d<bd){bd=d;b=t;}}return b;}
 function pushAway(src,t,dist){let dx=t.x-src.x,dz=t.z-src.z;const l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;const e={x:t.x,y:t.y,z:t.z};moveEnt(e,dx*dist,dz*dist);tp(t,e.x,e.z,t.y);}
@@ -348,91 +354,3 @@ function botGo(p,tx,tz,ty,run,dt,stop){
   return false;
 }
 const STAND=OBJS.map(standPoint);
-function botThink(p,dt){
-  if(!p.alive)return;
-  if(G.t<p.stunU){p.fl=0;stepVert(p,dt);return;}
-  if(p.role==='m')thinkMur(p,dt);else thinkInn(p,dt);
-}
-function facePlayer(p,t){p.yaw=Math.atan2(-(t.x-p.x),-(t.z-p.z));}
-function thinkInn(p,dt){
-  const a=p.ai,m=G.mur;
-  // fear
-  const seesM=m.alive&&visibleTo(p,m)&&pd(p,m.x,m.z)<(a.knows?((G.lights>>(roomAt(p.x,p.z,p.y)||{idx:0}).idx)&1?13:6):0)&&Math.abs(m.y-p.y)<2&&los(p.x,p.z,p.y,m.x,m.z,m.y);
-  if(seesM){
-    a.fleeU=G.t+4;a.work=null;
-    if(G.t>=p.cdF&&G.t>=p.silU&&pd(p,m.x,m.z)<6){facePlayer(p,m);const k=CHARS[p.ch].k;if(k==='ath'||k==='esc'||k==='ing')hostAct(p,{t:'f',yw:p.yaw});}
-    if(CHARS[p.ch].k==='exp'&&G.t>=p.cdF&&pd(p,m.x,m.z)<18){a.aimT=(a.aimT||0)+dt;
-      if(a.aimT>1.4){a.aimT=0;facePlayer(p,m);if(Math.random()<.45)hostAct(p,{t:'f',yw:p.yaw});else{p.cdF=G.t+60;snd('shot',p.x,p.z,p.y,70);}}}
-  }
-  if(G.t<a.fleeU){
-    if(!a.fleeGoal||G.t>a.fleeRe){a.fleeRe=G.t+2;let best=null,bs=-1;
-      for(const r of ROOMS){if(r.void)continue;const n={x:r.cx,z:r.cz,y:r.y},dm=hyp(n.x,n.z,m.x,m.z),dp=hyp(n.x,n.z,p.x,p.z);if(Math.abs(n.y-p.y)>6)continue;
-        if(dp<6||dp>26)continue;const s=dm-dp*.3+rnd(4);if(s>bs){bs=s;best=n;}}
-      a.fleeGoal=best;}
-    if(a.fleeGoal)botGo(p,a.fleeGoal.x,a.fleeGoal.z,a.fleeGoal.y,true,dt,1.2);return;
-  }
-  // bodies
-  if(G.t>a.seenBody)for(const b of G.bodies){if(pd(p,b.x,b.z)<9&&Math.abs(b.y-p.y)<2&&los(p.x,p.z,p.y,b.x,b.z,b.y)){a.seenBody=G.t+25;a.fleeU=G.t+5;a.fleeGoal=null;break;}}
-  if(a.wait>0){a.wait-=dt;p.fl=0;return;}
-  if(G.phase>=1){
-    if(a.work&&a.work.k!=='lev')a.work=null;
-    let ex=WORLD.exits.find(e=>e.open&&(!e.used||WORLD.exits.every(x=>!x.active||x.used||x.i===e.i))&&pd(p,e.cx,e.cz)<(e.used?10:40));
-    if(ex){botGo(p,ex.def.zx[0]*.5+ex.def.zx[1]*.5,ex.def.zz[0]*.5+ex.def.zz[1]*.5,0,true,dt,.4);return;}
-    if(!a.work){
-      const un=WORLD.exits.filter(x=>x.active&&!x.used),pool=un.length?un:WORLD.exits.filter(x=>x.active);
-      const e=pool[p.i%pool.length];if(!e){a.wait=2;return;}
-      a.work={k:'lev',i:e.i,t:0,dur:5};}
-    if(WORLD.exits[a.work.i].used&&WORLD.exits.some(x=>x.active&&!x.used))a.work=null;
-    if(!a.work)return;
-    const e=WORLD.exits[a.work.i];
-    if(e.open||!e.active){a.work=null;return;}
-    if(botGo(p,e.lx-e.def.dirx,e.lz-e.def.dirz,0,true,dt,.7)||pd(p,e.lx,e.lz)<1.9){a.work.t+=dt;p.fl=0;if(a.work.t>=a.work.dur){hostAct(p,{t:'lev',i:e.i});a.work=null;}}
-    return;
-  }
-  // phase 0: objectives
-  if(!a.work){
-    let best=-1,bs=1e9;
-    OBJS.forEach((d,i)=>{const o=G.ob[i];if(o.st===1||o.st===3)return;if(i===a.last&&Math.random()<.8)return;
-      const s=hyp(p.x,p.z,d.x,d.z)+rnd(14)+(Math.abs(p.y-d.y)>2?8:0);if(s<bs){bs=s;best=i;}});
-    if(best<0){a.wait=3;return;}
-    a.work={k:G.ob[best].st===2?'rep':'obj',i:best,t:0,dur:G.ob[best].st===2?(CHARS[p.ch].k==='ing'?2.5:6):rnd(5,9)};
-  }
-  const w=a.work,o=G.ob[w.i],sp=STAND[w.i];
-  if(o.st===1||o.st===3||(w.k==='obj'&&o.st===2)||(w.k==='rep'&&o.st!==2)){a.work=null;a.wait=rnd(1,3);return;}
-  if(botGo(p,sp[0],sp[1],sp[2],false,dt,.9)||pd(p,OBJS[w.i].x,OBJS[w.i].z)<1.7){
-    w.t+=dt;p.fl=0;const d=OBJS[w.i];p.yaw=Math.atan2(-(d.x-p.x),-(d.z-p.z));
-    if(w.t>=w.dur){a.last=w.i;
-      if(w.k==='rep')hostAct(p,{t:'rep',i:w.i});else{if(!o.func){hostAct(p,{t:'try',i:w.i});}else hostAct(p,{t:'obj',i:w.i});}
-      a.work=null;a.wait=rnd(1,4);}
-  }
-}
-function thinkMur(p,dt){
-  const a=p.ai;
-  if(G.t<a.coolU){ // walk away calmly
-    if(!a.fleeGoal||G.t>a.fleeRe){a.fleeRe=G.t+3;{const r=pick(ROOMS.filter(q=>!q.void));a.fleeGoal={x:r.cx,z:r.cz,y:r.y};}}
-    if(a.fleeGoal)botGo(p,a.fleeGoal.x,a.fleeGoal.z,a.fleeGoal.y,false,dt,1.5);return;}
-  if(G.t>a.retarget){a.retarget=G.t+1.5;
-    let best=null,bs=1e9;
-    for(const t of G.P){if(t===p||!t.alive||t.escaped||t.hidden>=0||G.t<t.invisU)continue;
-      const d=pd(p,t.x,t.z)+(Math.abs(t.y-p.y)>2?10:0);
-      let crowd=0;for(const u of G.P)if(u!==t&&u!==p&&u.alive&&!u.escaped&&hyp(u.x,u.z,t.x,t.z)<6)crowd++;
-      const s=d+crowd*7+rnd(6);if(s<bs){bs=s;best=t;}}
-    a.target=best?best.i:null;}
-  const t=a.target!=null&&G.t>=24?G.P[a.target]:null;
-  // sabotage opportunistically
-  if(G.phase===0&&G.t>=p.cdS&&Math.random()<dt*.35)for(let i=0;i<OBJS.length;i++){const d=OBJS[i];if(G.ob[i].st===0&&pd(p,d.x,d.z)<2.6&&Math.abs(p.y-d.y)<2){hostAct(p,{t:'sab'});break;}}
-  if(t&&t.alive&&!t.escaped&&t.hidden<0&&G.t>=t.invisU){
-    const d=pd(p,t.x,t.z),vis=Math.abs(t.y-p.y)<2&&los(p.x,p.z,p.y,t.x,t.z,t.y);
-    if(vis&&d<1.7&&G.t>=p.cdA){
-      let wit=0;for(const u of G.P)if(u!==p&&u!==t&&u.alive&&!u.escaped&&u.hidden<0&&pd(u,p.x,p.z)<11&&Math.abs(u.y-p.y)<2&&los(u.x,u.z,u.y,p.x,p.z,p.y))wit++;
-      if(wit===0||Math.random()<dt*.5){facePlayer(p,t);hostAct(p,{t:'atk',yw:p.yaw});a.coolU=G.t+5;a.target=null;a.retarget=G.t+4;return;}
-      p.fl=0;return;}
-    if(vis&&d>3.5&&d<11&&G.t>=p.cdG&&G.t>=20&&Math.random()<dt*.6){facePlayer(p,t);hostAct(p,{t:'rg',yw:p.yaw});return;}
-    botGo(p,t.x,t.z,t.y,true,dt,1.0);return;
-  }
-  // patrol objectives / exits
-  if(!a.patrol||G.t>a.patrolU||botGo(p,a.patrol[0],a.patrol[1],a.patrol[2],false,dt,1.2)){
-    const cands=G.phase===0?OBJS.map((d,i)=>G.ob[i].st===1?null:STAND[i]).filter(Boolean):WORLD.exits.filter(e=>e.active).map(e=>[e.lx,e.lz,0]);
-    a.patrol=cands.length?pick(cands):[20,15,0];a.patrolU=G.t+25;
-  }
-}

@@ -93,7 +93,7 @@ function launch(){
 $('#bStart').onclick=()=>{if(L.solo||NET.isHost)launch();};
 function showEnd(){
   if(document.exitPointerLock&&locked())document.exitPointerLock();
-  if(mapOpen){mapOpen=false;$('#mapov').style.display='none';}if(MG.on)mgClose();
+  if(mapOpen)closeMap();if(MG.on)mgClose();
   const [w,why,mi]=V.ov,mine=PV?PV.r:'i',win=(w==='inn')===(mine==='i');
   $('#endWho').textContent=(mine==='m'?'VOUS ÉTIEZ LE MEURTRIER':'VOUS ÉTIEZ INNOCENT')+' · '+CHARS[PV.c].n.toUpperCase();
   $('#endTitle').textContent=win?'Victoire':'Défaite';$('#endTitle').style.color=win?'var(--ok)':'var(--blood)';

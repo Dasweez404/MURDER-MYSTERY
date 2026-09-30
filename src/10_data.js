@@ -144,12 +144,12 @@ const LOWS=[{lv:-1,ax:'x',f:24,a:35,b:36},{lv:0,ax:'z',f:39,a:13,b:14},{lv:1,ax:
 const FUSES=[{lv:-1,x:43.3,z:22.6,y:-4},{lv:0,x:13.8,z:19.6,y:0},{lv:1,x:13.9,z:26.6,y:4}];
 const TLAMPS=[
  {n:'Lampe de bureau',x:17.3,z:3.3,y:.8,col:0xa8ff98,int:.8,dist:10},{n:'Lampe de lecture',x:7.8,z:4.7,y:.78,col:0xffc27a,int:.8,dist:10},
- {n:'Lampe de chevet',x:19.2,z:31.4,y:4.6,col:0xffd8a0,int:.8,dist:10},{n:'Lampe de chevet',x:2.4,z:33.2,y:4.6,col:0xffe090,int:.8,dist:10},
- {n:'Bougeoir',x:33,z:18.1,y:-3.1,col:0xffa040,int:.9,dist:10},{n:'Bougeoir',x:20,z:30,y:-3.0,col:0xffa040,int:.9,dist:10},
+ {n:'Lampe de chevet',x:21.4,z:32.6,y:4.65,col:0xffd8a0,int:.8,dist:10},{n:'Lampe de chevet',x:2.9,z:28.2,y:4.6,col:0xffe090,int:.8,dist:10},
+ {n:'Bougeoir',x:33,z:18.1,y:-3.1,col:0xffa040,int:.9,dist:10},{n:'Bougeoir',x:20,z:30,y:-3.1,col:0xffa040,int:.9,dist:10},
 ];
 const TPORTS=[
- {k:'dumb',n:'Monte-charge',a:{x:37,z:24.75,y:0},b:{x:37,z:24.75,y:4}},
- {k:'hatch',n:'Trappe secrète',a:{x:3.3,z:1.9,y:0},b:{x:6.6,z:30.4,y:-4}},
+ {k:'dumb',n:'Monte-charge',a:{x:30.4,z:24.75,y:0},b:{x:30.4,z:24.75,y:4}},
+ {k:'hatch',n:'Trappe secrète',a:{x:3.4,z:2.8,y:0},b:{x:6.6,z:30.4,y:-4}},
 ];
 const WINS=[
  {ax:'x',f:0,a:6,b:8,n:'Fenêtre de la bibliothèque'},{ax:'z',f:0,a:18,b:20,n:'Fenêtre du salon'},{ax:'x',f:0,a:33,b:35,n:'Fenêtre du garage'},
@@ -193,11 +193,11 @@ const FURN=[
  {n:'Cercueil',lv:-1,kind:'sarco',w:2.4,d:1,h:1.25,col:0x3a2a1e,st:[{x:25.9,z:21.5,ry:Math.PI/2},{x:20,z:18,ry:0}]},
 ];
 const HIDES=[
- {k:'wardrobe',x:12.3,z:1.2,y:0},{k:'wardrobe',x:12.3,z:21,y:0},{k:'locker',x:43.2,z:1.2,y:0},{k:'wardrobe',x:27.9,z:23,y:0},
- {k:'locker',x:35,z:33.2,y:0},{k:'wardrobe',x:12.2,z:24,y:0},{k:'barrel',x:43.2,z:13.2,y:-4},{k:'barrel',x:27.9,z:23,y:-4},
+ {k:'wardrobe',x:12.3,z:1.2,y:0},{k:'wardrobe',x:12.3,z:21,y:0},{k:'locker',x:43.2,z:1.2,y:0},{k:'wardrobe',x:27.9,z:21,y:0},
+ {k:'locker',x:43.3,z:33.3,y:0},{k:'wardrobe',x:12.2,z:24,y:0},{k:'barrel',x:43.2,z:13.2,y:-4},{k:'barrel',x:27.9,z:23,y:-4},
  {k:'wardrobe',x:25.8,z:33,y:4},{k:'wardrobe',x:1,z:33,y:4},
  {k:'curtain',x:1,z:21,y:0},{k:'crate',x:43.3,z:11,y:0},{k:'bed',x:11.6,z:19,y:4},{k:'coffin',x:25.6,z:18.6,y:-4},{k:'locker',x:13.9,z:1.1,y:0},
- {k:'curtain',x:26.2,z:22.2,y:0},{k:'barrel',x:43.2,z:33,y:-4},{k:'crate',x:14,z:33,y:-4},{k:'locker',x:38.3,z:13,y:4},
+ {k:'curtain',x:26.2,z:22.2,y:0},{k:'barrel',x:43.2,z:33,y:-4},{k:'crate',x:14,z:33,y:-4},{k:'locker',x:38.3,z:20.8,y:4},
 ];
 const NOISE=[
  {k:'piano',n:'Piano',x:38,z:32.6,y:4,w:2.2,d:1.2,h:1.0,r:42},
@@ -277,6 +277,20 @@ function los(ax,az,ay,bx,bz,by){
   return true;
 }
 
+function segRect(ax,az,bx,bz,x0,z0,x1,z1){
+  let t0=0,t1=1;const dx=bx-ax,dz=bz-az;
+  if(Math.abs(dx)<1e-9){if(ax<x0||ax>x1)return false;}else{let a=(x0-ax)/dx,b=(x1-ax)/dx;if(a>b){const t=a;a=b;b=t;}t0=Math.max(t0,a);t1=Math.min(t1,b);}
+  if(Math.abs(dz)<1e-9){if(az<z0||az>z1)return false;}else{let a=(z0-az)/dz,b=(z1-az)/dz;if(a>b){const t=a;a=b;b=t;}t0=Math.max(t0,a);t1=Math.min(t1,b);}
+  return t0<=t1;
+}
+// can a walker (radius 0.4) go straight from A to B without touching a collider?
+function walkClear(ax,az,ay,bx,bz,by){
+  const lo=Math.min(ay,by),hi=Math.max(ay,by);
+  for(let i=0;i<COL.length;i++){const c=COL[i];if(!c.on||c.y0>=hi+1.7||c.y1<=lo+.05)continue;
+    if(segRect(ax,az,bx,bz,c.x0-.4,c.z0-.4,c.x1+.4,c.z1+.4))return false;}
+  return true;
+}
+
 /* ============================ grid navigation (A*) ============================ */
 const DYN=[]; // dynamic colliders: {c, type, o}; type decides whether they block walkers right now
 const GN={cs:.5,x0:-6,z0:-6,W:112,H:92,walk:[null,null,null],st:[null,null,null],dyn:[null,null,null],portals:new Map(),dynT:-9,ready:false};
@@ -344,6 +358,7 @@ function gLine(l,ax,az,bx,bz){
   for(let i=1;i<n;i++){const t=i/n;if(!gFree(l,gcx(ax+(bx-ax)*t),gcz(az+(bz-az)*t)))return false;}
   return true;
 }
+function gNearestOK(l,x,z){return gFree(l,gcx(x),gcz(z));}
 function gNearest(l,x,z){
   const cx0=gcx(x),cz0=gcz(z);let best=-1,bd=1e9;
   for(let r=0;r<=6&&best<0;r++)for(let dz=-r;dz<=r;dz++)for(let dx=-r;dx<=r;dx++){
@@ -356,8 +371,15 @@ function planPath(x,z,y,tx,tz,ty,now){
   if(!GN.ready)return null;
   if(now===undefined||now-GN.dynT>.4){gDyn();GN.dynT=now===undefined?-9:now;}
   const W=GN.W,H=GN.H,N=W*H,la=lvIdx(y),lb=lvIdx(ty);
-  const s=gNearest(la,x,z),g=gNearest(lb,tx,tz);if(s<0||g<0)return null;
-  const S=la*N+s,Gl=lb*N+g,gxp=gx(g%W),gzp=gz(Math.floor(g/W));
+  let pre=null,startLv=la,s=-1;
+  for(const st of STAIRS){ // standing on a ramp : head for the end nearest to the goal level
+    if(st.portal&&x>=st.x0-.2&&x<=st.x1+.2&&z>=st.z0-.2&&z<=st.z1+.2&&y>st.ya-.3&&y<st.yb+.3&&(y>st.ya+.15&&y<st.yb-.15||true)&&!gNearestOK(la,x,z)){
+      const up=Math.abs(ty-st.yb)<Math.abs(ty-st.ya),lev=up?st.portal[2]:st.portal[0],idx=up?st.portal[3]:st.portal[1];
+      startLv=lev;s=idx;pre={x:gx(idx%W),z:gz(Math.floor(idx/W)),y:LVY[lev]};break;}
+  }
+  if(s<0)s=gNearest(la,x,z);
+  const g=gNearest(lb,tx,tz);if(s<0||g<0)return null;
+  const S=startLv*N+s,Gl=lb*N+g,gxp=gx(g%W),gzp=gz(Math.floor(g/W));
   const dist=new Map(),prev=new Map(),heap=[[0,S]];dist.set(S,0);
   const h=(st)=>{const l=Math.floor(st/N),i=st%N;return Math.hypot(gx(i%W)-gxp,gz(Math.floor(i/W))-gzp)+(l!==lb?2:0);};
   const push=(it)=>{heap.push(it);let i=heap.length-1;while(i>0){const p=(i-1)>>1;if(heap[p][0]<=heap[i][0])break;[heap[p],heap[i]]=[heap[i],heap[p]];i=p;}};
@@ -386,5 +408,6 @@ function planPath(x,z,y,tx,tz,ty,now){
     out.push({x:pts[b].x,z:pts[b].z,y:LVY[pts[b].l]});a=b;
   }
   if(out.length)out[out.length-1]={x:tx,z:tz,y:ty};else out.push({x:tx,z:tz,y:ty});
+  if(pre)out.unshift(pre);
   return out;
 }

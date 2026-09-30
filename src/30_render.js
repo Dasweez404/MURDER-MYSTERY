@@ -101,7 +101,7 @@ function clearView(){
 }
 function startView(roster,my){
   clearView();
-  V.roster=roster;V.my=my;V.snap=null;V.lastEv=0;V.over=false;V.seenBody.clear();PV=null;V.lt=-1;V.revealed=false;V.revealOn=false;ME.look=null;V.tl=-1;V.fz=0;ME.h=1.7;
+  V.roster=roster;V.my=my;V.snap=null;V.lastEv=0;V.over=false;V.seenBody.clear();PV=null;V.lt=-1;V.revealed=false;V.revealOn=false;ME.look=null;V.tl=-1;V.fz=0;ME.h=1.7;MAPS.pins.length=0;MAPS.trail.length=0;
   roster.forEach((r,i)=>{
     const g=makeAvatar(r.c);scene.add(g);
     V.ents.push({g,ci:r.c,x:r.s[0],y:0,z:r.s[1],yaw:0,tx:r.s[0],ty:0,tz:r.s[1],tyaw:0,f:0,step:0,ph:0});

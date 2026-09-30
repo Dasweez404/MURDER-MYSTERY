@@ -11,3 +11,5 @@ les bots complètent l'effectif. Votes au salon : camp préféré (innocent / in
 
 Rendu pixel-art (touche P pour basculer), ventilations à passer accroupi, fusibles / portes coincées / leviers à réparer, meubles déplaçables, trappe et monte-charge.
 Sources : `src/`, assemblées par `src/build.sh`.
+
+Carte interactive (touche M) : onglets par niveau, survol = infos de la pièce, clic = marqueur (danger / suspect / sûr / note), clic droit = retirer, molette + glisser = zoom, calques (objectifs, sorties, escaliers, portes, électricité, corps, ma trace).
