@@ -1,8 +1,11 @@
 
 /* ============================ rendering & view state ============================ */
 const gl=$('#gl');
-const renderer=new THREE.WebGLRenderer({canvas:gl,antialias:true,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
+const renderer=new THREE.WebGLRenderer({canvas:gl,antialias:false,powerPreference:'high-performance'});
+renderer.setPixelRatio(1);
+let PIX=1;try{PIX=localStorage.getItem('mm_pix')==='0'?0:1;}catch(e){}
+function pixScale(){return PIX?.5:Math.min(window.devicePixelRatio||1,1.5);}
+gl.style.imageRendering=PIX?'pixelated':'auto';
 renderer.outputEncoding=THREE.sRGBEncoding;
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x04030a);
@@ -14,7 +17,8 @@ scene.add(camera);
 const headlamp=new THREE.PointLight(0xffe6c0,.5,8,1.6);camera.add(headlamp);headlamp.position.set(0,0,.2);
 const flashLight=new THREE.PointLight(0xff2030,0,14,1.4);scene.add(flashLight);
 buildWorld(scene);
-function resize(){const a=$('#app'),w=a.clientWidth||innerWidth,h=a.clientHeight||innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+function resize(){const a=$('#app'),w=a.clientWidth||innerWidth,h=a.clientHeight||innerHeight,s=pixScale();renderer.setSize(Math.floor(w*s),Math.floor(h*s),false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+function togglePix(){PIX=PIX?0:1;try{localStorage.setItem('mm_pix',String(PIX));}catch(e){}gl.style.imageRendering=PIX?'pixelated':'auto';resize();}
 addEventListener('resize',resize);resize();
 
 /* ---- blocky (Minecraft-style) characters: skin colour = role colour, one hat per role ---- */
@@ -45,6 +49,15 @@ function makeAvatar(ci){
     case'safari':hat(.95,.05,.95,0x6a5a2a,0,1.96,0);hat(.56,.2,.56,0x7a6a32,0,2.06,0);break;
     case'press':hat(.54,.12,.54,0x3a3020,0,1.97,0);hat(.54,.04,.3,0x3a3020,0,1.94,-.36);hat(.16,.1,.02,0xffffff,.2,1.08,-.15);break;
     case'helmet':hat(.6,.18,.6,0xf0d020,0,1.98,0);hat(.56,.12,.56,0xf0d020,0,2.1,0);hat(.1,.06,.3,0xf0d020,0,2.18,0);break;
+    case'beret':hat(.56,.1,.56,0x7a2a9a,0,1.96,0);hat(.3,.08,.3,0x7a2a9a,-.08,2.04,0);hat(.06,.5,.06,0x3a2a1a,.4,1.2,-.1);break;
+    case'shades':hat(.56,.22,.56,0xf0e0a0,0,1.85,.02);hat(.5,.1,.08,0x050505,0,1.72,-.26);break;
+    case'toque':hat(.5,.16,.5,0xffffff,0,1.98,0);hat(.56,.36,.56,0xffffff,0,2.22,0);break;
+    case'phones':hat(.6,.06,.12,0x222226,0,1.98,0);hat(.1,.22,.12,0x222226,.3,1.7,0);hat(.1,.22,.12,0x222226,-.3,1.7,0);hat(.46,.1,.06,0x0f3a30,0,1.72,-.26);break;
+    case'agent':hat(.54,.12,.54,0x111118,0,1.97,0);hat(.5,.1,.06,0x050505,0,1.72,-.26);hat(.04,.25,.04,0xdddddd,.3,1.6,.1);break;
+    case'afro':hat(.76,.5,.76,0x2a1a40,0,1.98,0);break;
+    case'antenna':hat(.54,.12,.54,0x5a8a30,0,1.97,0);hat(.04,.4,.04,0xcccccc,0,2.25,0);hat(.1,.1,.1,0xff4040,0,2.48,0);break;
+    case'dome':{const m=new THREE.Mesh(new THREE.BoxGeometry(.72,.72,.72),new THREE.MeshLambertMaterial({color:0xbfe8ff,transparent:true,opacity:.35}));m.position.y=1.7;g.add(m);hat(.6,.08,.6,0xeeeeee,0,1.3,0);break;}
+    case'surgeon':hat(.56,.14,.56,0x9af0b0,0,1.98,0);hat(.54,.2,.1,0xffffff,0,1.62,-.26);break;
     case'prop':hat(.56,.12,.56,0x7a2a9a,0,1.97,0);hat(.5,.04,.25,0x7a2a9a,0,1.94,-.34);prop=new THREE.Group();prop.add(new THREE.Mesh(new THREE.BoxGeometry(.5,.02,.07),lam(0xffe040)));prop.add(new THREE.Mesh(new THREE.BoxGeometry(.07,.02,.5),lam(0xffe040)));prop.position.y=2.12;g.add(prop);break;
   }
   const knife=new THREE.Mesh(new THREE.BoxGeometry(.05,.05,.5),new THREE.MeshBasicMaterial({color:0xdde4ea}));knife.position.set(.38,.85,-.35);knife.visible=false;g.add(knife);
@@ -52,7 +65,7 @@ function makeAvatar(ci){
   g.scale.setScalar(.94);g.userData={head,aL,aR,lL,lR,prop,knife,stars};return g;
 }
 const V={on:false,roster:[],my:-1,snap:null,ents:[],bodies:new Map(),zones:new Map(),lastEv:0,over:false,noLock:false,mode:'solo',seenBody:new Set(),lt:-1};
-const ME={x:21,y:0,z:15,vy:0,yaw:0,pit:0,crouch:0,eye:1.6,fl:0,step:0,ground:true,tpN:0};
+const ME={x:21,y:0,z:15,vy:0,yaw:0,pit:0,crouch:0,eye:1.6,fl:0,step:0,ground:true,tpN:0,h:1.7,gs:1};
 let PV=null;
 const bodyMat=new THREE.MeshLambertMaterial({color:0x6b0f18});
 const fxGroup=new THREE.Group();scene.add(fxGroup);
@@ -88,10 +101,10 @@ function clearView(){
 }
 function startView(roster,my){
   clearView();
-  V.roster=roster;V.my=my;V.snap=null;V.lastEv=0;V.over=false;V.seenBody.clear();PV=null;V.lt=-1;V.revealed=false;V.revealOn=false;ME.look=null;
+  V.roster=roster;V.my=my;V.snap=null;V.lastEv=0;V.over=false;V.seenBody.clear();PV=null;V.lt=-1;V.revealed=false;V.revealOn=false;ME.look=null;V.tl=-1;V.fz=0;ME.h=1.7;
   roster.forEach((r,i)=>{
     const g=makeAvatar(r.c);scene.add(g);
-    V.ents.push({g,x:r.s[0],y:0,z:r.s[1],yaw:0,tx:r.s[0],ty:0,tz:r.s[1],tyaw:0,f:0,step:0,ph:0});
+    V.ents.push({g,ci:r.c,x:r.s[0],y:0,z:r.s[1],yaw:0,tx:r.s[0],ty:0,tz:r.s[1],tyaw:0,f:0,step:0,ph:0});
     g.position.set(r.s[0],0,r.s[1]);
   });
   const me=roster[my];ME.x=me.s[0];ME.z=me.s[1];ME.y=0;ME.vy=0;ME.yaw=Math.atan2(-(21.5-ME.x),-(17-ME.z));ME.pit=0;ME.crouch=0;ME.eye=1.6;ME.tpN=0;
@@ -191,7 +204,13 @@ function applySnap(S){
   S.fu.forEach((s,i)=>{const f=WORLD.furn[i];if(f.s!==s)applyFurn(f,s);});
   S.ex.forEach((s,i)=>{const e=WORLD.exits[i];e.active=!!(s&1);e.open=!!(s&2);e.used=!!(s&4);e.col.on=!e.open;e.beam.visible=e.active;});
   S.ob.forEach((s,i)=>{WORLD.objs[i].state=s;});
-  S.pl.forEach((q,i)=>{const e=V.ents[i];if(!e)return;e.f=q[0];e.tx=q[1];e.ty=q[2];e.tz=q[3];e.tyaw=q[4];});
+  V.tl=S.tl;V.fz=S.fz;
+  WORLD.vents.forEach((v,i)=>{const op=!!((S.vt>>i)&1);if(op!==v.open){v.open=op;v.col.on=!op;v.mesh.visible=!op;}});
+  WORLD.fuses.forEach((f,i)=>{const br=!!((S.fz>>i)&1);f.lamp.material.color.setHex(br?0xff2a2a:0x40ff70);f.broken=br;});
+  S.ex.forEach((s,i)=>{WORLD.exits[i].jam=!!(s&8);});
+  S.pl.forEach((q,i)=>{const e=V.ents[i];if(!e)return;e.f=q[0];e.tx=q[1];e.ty=q[2];e.tz=q[3];e.tyaw=q[4];
+    const want=q[5]>=0?q[5]:V.roster[i].c;
+    if(want!==e.ci){const old=e.g;scene.remove(old);e.g=makeAvatar(want);e.ci=want;scene.add(e.g);e.g.visible=old.visible&&i!==V.my;if(i===V.my)e.g.visible=false;}});
   const seen=new Set();
   for(const b of S.bd){seen.add(b[0]);if(!V.bodies.has(b[0])){
       const g=makeAvatar(V.roster[b[0]].c);const wrap=new THREE.Group();g.rotation.x=-Math.PI/2;g.position.set(0,.24,0);wrap.add(g);
@@ -203,6 +222,11 @@ function applySnap(S){
       const [id,type,x,zz,y,r]=z;let m;
       if(type==='smoke'){m=new THREE.Mesh(new THREE.SphereGeometry(r,14,10),new THREE.MeshBasicMaterial({color:0x8a8f99,transparent:true,opacity:.78,depthWrite:false}));m.position.set(x,y+1.2,zz);}
       else if(type==='gum'){m=new THREE.Mesh(new THREE.SphereGeometry(1.15,14,10),new THREE.MeshLambertMaterial({color:0xff6bd0,emissive:0x5a1248}));m.position.set(x,y+1.15,zz);}
+      else if(type==='paint'||type==='acid'){const col=type==='paint'?pick([0xf2d21f,0xe0507a,0x50b0f0]):0x60ff50;m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,.05,14),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.7}));m.position.set(x,y+.05,zz);}
+      else if(type==='drone'){m=new THREE.Mesh(new THREE.BoxGeometry(.3,.12,.3),new THREE.MeshBasicMaterial({color:0x1fd6a8}));m.position.set(x,y+2.2,zz);}
+      else if(type==='beacon'){m=new THREE.Group();const c=new THREE.Mesh(new THREE.CylinderGeometry(.08,.14,1.0,6),new THREE.MeshBasicMaterial({color:0x9adf3a}));c.position.y=.5;m.add(c);m.position.set(x,y,zz);}
+      else if(type==='decoy'){m=makeAvatar(z[7]);m.position.set(x,y,zz);}
+      else if(type==='speaker'){m=new THREE.Group();const b=new THREE.Mesh(new THREE.BoxGeometry(.9,1.4,.6),new THREE.MeshLambertMaterial({color:0x16161a}));b.position.y=.7;m.add(b);const c=new THREE.Mesh(new THREE.CylinderGeometry(.22,.22,.05,10),new THREE.MeshBasicMaterial({color:0xc080ff}));c.rotation.x=Math.PI/2;c.position.set(0,.9,.32);m.add(c);m.position.set(x,y,zz);}
       else{m=new THREE.Group();const dm=new THREE.MeshBasicMaterial({color:0x111111});for(let i=0;i<40;i++){const s=new THREE.Mesh(new THREE.SphereGeometry(.05,4,4),dm);s.position.set(rnd(-r,r),rnd(.2,2),rnd(-r,r));m.add(s);}m.position.set(x,y,zz);}
       fxGroup.add(m);const rec={m,type,x,z:zz,y,r};
       if(type==='gum'&&V.mode==='client')rec.col=addCol(x-1.1,y,zz-1.1,x+1.1,y+2.4,zz+1.1,true);

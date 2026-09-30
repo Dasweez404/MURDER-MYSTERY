@@ -16,7 +16,7 @@ html,body{height:100%}
 body{margin:0;background:var(--ink);color:var(--fg);font:15px/1.45 var(--body);overflow:hidden}
 *{box-sizing:border-box}
 #app{position:relative;width:100%;height:100%;overflow:hidden;background:var(--ink);user-select:none}
-#gl{position:absolute;inset:0;width:100%;height:100%;display:block}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated}
 button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible,input:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .screen{position:absolute;inset:0;overflow:auto;padding:24px 16px;background:radial-gradient(120% 90% at 20% 0%,#2a1018 0%,#0b0a10 60%)}
@@ -182,7 +182,8 @@ label.l{font:700 12px var(--mono);letter-spacing:.08em;color:var(--dim);text-tra
             <dt>E</dt><dd>Interagir : portes, meubles, interrupteurs, objectifs, levier, cachette, piano…</dd>
             <dt>Clic G · Clic D · R</dt><dd>Meurtrier : tuer de près · attrape à distance (bruyant) · saboter</dd>
             <dt>A (Q) · F</dt><dd>Capacité rechargeable · capacité unique</dd>
-            <dt>M · Tab</dt><dd>Plan des 3 niveaux · rôle &amp; capacités</dd>
+            <dt>M · Tab · P</dt><dd>Plan des 3 niveaux · rôle &amp; capacités · rendu pixel ou net</dd>
+            <dt>G</dt><dd>Outil du personnage (pistolet, yoyo, menottes, louche, pilule)</dd>
           </dl>
           <p class="note" style="margin-top:12px">Clavier + souris requis. Aucune réunion : les cadavres, bruits, portes et sabotages sont vos seuls indices.</p>
         </div>

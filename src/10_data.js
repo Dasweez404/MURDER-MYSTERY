@@ -20,33 +20,63 @@ const CHARS=[
  {k:'ath',n:'Athlète olympique',cat:'fuite',col:0xd9372f,css:'#d9372f',hat:'band',
   passive:'Rapide et silencieux accroupi.',
   q:{n:'Gant de boxe',d:'Assomme un invité à moins de 2,6 m pendant 4 s.',cd:18},
-  f:{n:'Dopage',d:'Vitesse ×1,6 et insensible pendant 6 s.'},
-  p:null},
+  f:{n:'Dopage',d:'Vitesse ×1,6 et insensible pendant 6 s.'}},
  {k:'esc',n:'Escroc braqueur',cat:'fuite',col:0x2f6fe0,css:'#2f6fe0',hat:'mask',
-  passive:'Pistolet paralysant (clic gauche) : coupe les capacités d’une cible 6 s.',
+  passive:'Pistolet paralysant (G) : coupe les capacités d’une cible 6 s.',
   q:{n:'Bombe fumigène',d:'Nuage opaque pendant 8 s.',cd:25},
-  f:{n:'Invisibilité',d:'Invisible 7 s.'},
-  p:{n:'Pistolet',cd:22}},
+  f:{n:'Invisibilité',d:'Invisible 7 s.'},p:{n:'Pistolet',cd:22}},
  {k:'exp',n:'Explorateur braconnier',cat:'enq',col:0x8a5a2b,css:'#8a5a2b',hat:'safari',
   passive:'Voit les traces de pas (temporaires, avec direction).',
   q:{n:'Nuage d’insectes',d:'Tétanise ceux qui le traversent, 10 s.',cd:25},
-  f:{n:'Fusil',d:'Une balle. Neutralise le meurtrier ; un tir raté = recharge de 60 s.'},
-  p:null},
+  f:{n:'Fusil',d:'Une balle. Neutralise le meurtrier ; un tir raté = recharge de 60 s.'}},
  {k:'jou',n:'Journaliste ragoteur',cat:'enq',col:0xc7962b,css:'#c7962b',hat:'press',
   passive:'Connaît le nombre de personnes vivantes.',
   q:{n:'Indiscrétion',d:'Voit où se trouvent tous les joueurs 5 s.',cd:30},
-  f:{n:'Lien',d:'Lie deux joueurs : si l’un meurt, l’autre reçoit un bonus puissant.'},
-  p:null},
+  f:{n:'Lien',d:'Lie deux joueurs : si l’un meurt, l’autre reçoit un bonus puissant.'}},
  {k:'ing',n:'Ingénieur bricoleur',cat:'deb',col:0x2bb7c4,css:'#2bb7c4',hat:'helmet',
   passive:'Répare les sabotages en 2,5 s au lieu de 6 s.',
   q:{n:'Barricade',d:'Verrouille la porte proche pendant 18 s.',cd:25},
-  f:{n:'Protection',d:'Une vie supplémentaire (40 s).'},
-  p:null},
+  f:{n:'Protection',d:'Une vie supplémentaire (40 s).'}},
  {k:'enf',n:'Enfant pourri gâté',cat:'deb',col:0xd13fae,css:'#d13fae',hat:'prop',
-  passive:'Yoyo (clic gauche) : attrape un invité à moins de 7 m.',
+  passive:'Yoyo (G) : attrape un invité à moins de 7 m.',
   q:{n:'Lance-pierre',d:'Aveugle la cible visée pendant 4 s.',cd:20},
-  f:{n:'Chewing-gum',d:'Bulles géantes qui bloquent un passage 10 s.'},
-  p:{n:'Yoyo',cd:16}},
+  f:{n:'Chewing-gum',d:'Bulles géantes qui bloquent un passage 10 s.'},p:{n:'Yoyo',cd:16}},
+ {k:'art',n:'Artiste inspiré',cat:'fuite',col:0xf2d21f,css:'#f2d21f',hat:'beret',
+  passive:'Accroupi et immobile : prend la texture du mur et se camoufle.',
+  q:{n:'Flaque de peinture',d:'Pose une flaque qui ralentit (15 s).',cd:20},
+  f:{n:'Déguisement',d:'Prend l’apparence d’un autre invité 15 s (sans ses pouvoirs).'}},
+ {k:'sta',n:'Star hollywoodienne',cat:'fuite',col:0xff7eb9,css:'#ff7eb9',hat:'shades',
+  passive:'Accroupie et immobile : joue le cadavre.',
+  q:{n:'Leurre sonore',d:'Un cri ou des pas résonnent à distance.',cd:20},
+  f:{n:'Sosie',d:'Crée une version immobile d’elle-même pendant 25 s.'}},
+ {k:'che',n:'Chef étoilé',cat:'deb',col:0xf0f0f0,css:'#f0f0f0',hat:'toque',
+  passive:'Louche (G) : assomme un invité, mais vous ralentit ensuite.',
+  q:{n:'Coup de feu',d:'Vitesse ×1,3 pour vous et les alliés proches pendant 5 s.',cd:25},
+  f:{n:'Service en rafale',d:'Court 5 s sans s’arrêter et assomme sur son passage.'},p:{n:'Louche',cd:10}},
+ {k:'gee',n:'Geek bidouilleur',cat:'enq',col:0x1fd6a8,css:'#1fd6a8',hat:'phones',
+  passive:'Tâches et réparations beaucoup plus rapides.',
+  q:{n:'Drone espion',d:'Pose un drone (25 s) qui signale les passages.',cd:22},
+  f:{n:'Copie',d:'Imite la dernière capacité unique que vous avez vue utiliser.'}},
+ {k:'cia',n:'Patron de la CIA',cat:'enq',col:0x4b3fd0,css:'#4b3fd0',hat:'agent',
+  passive:'Menottes (G) : entrave un invité (une personne à la fois).',
+  q:{n:'Roulade',d:'Roulade de 4 m avec 1,5 s d’insensibilité.',cd:15},
+  f:{n:'Détection',d:'Sonde l’invité visé : verdict imparfait.'},p:{n:'Menottes',cd:14}},
+ {k:'mus',n:'Musicien mégalo',cat:'deb',col:0x9b4fe0,css:'#9b4fe0',hat:'afro',
+  passive:'Plus rapide que la moyenne.',
+  q:{n:'Onde de choc',d:'Repousse les invités proches.',cd:18},
+  f:{n:'Enceinte géante',d:'Zone assommante 10 s : 3 s à l’intérieur = assommé.'}},
+ {k:'rob',n:'Robot-valet',cat:'fuite',col:0x9adf3a,css:'#9adf3a',hat:'antenna',
+  passive:'Silencieux en marchant, bruyant en courant.',
+  q:{n:'Balise',d:'Pose une balise (40 s) qui signale les passages.',cd:20},
+  f:{n:'Téléportation',d:'Se téléporte vers la dernière balise posée.'}},
+ {k:'spa',n:'Spationaute déconnecté',cat:'deb',col:0xff8a1f,css:'#ff8a1f',hat:'dome',
+  passive:'Flotte en sautant : saut haut, chute lente.',
+  q:{n:'Détournement',d:'Inverse les commandes de la cible visée 4 s.',cd:22},
+  f:{n:'Apesanteur',d:'Coupe les capacités de la pièce (vous aussi) 4 s.'}},
+ {k:'med',n:'Médecin pharmaceutique',cat:'fuite',col:0x2f9e44,css:'#2f9e44',hat:'surgeon',
+  passive:'Pilules (G) : effet aléatoire ; ralenti après 3 prises.',
+  q:{n:'Bombe d’acide',d:'Flaque d’acide (10 s) qui bloque le passage.',cd:22},
+  f:{n:'Réanimation',d:'Réanime un mort : maintenez E sur son corps (4 s).'},p:{n:'Pilule',cd:6}},
 ];
 const OBJS=[
  {n:'Disjoncteur du garage',t:'hold',x:30,z:.75,y:0},
@@ -80,7 +110,7 @@ const ROOMS=[
  // --- sous-sol
  R('cave','Cave à vin',-1,27,12,39,24,'stone'),R('chauf','Chaufferie',-1,39,12,44,24,'conc'),R('tun','Tunnel',-1,13,14,27,17,'stone'),
  R('lab','Laboratoire secret',-1,0,10,13,22,'tile2'),R('crypt','Crypte',-1,13,17,27,26,'stone'),
- R('arch','Archives',-1,0,22,13,34,'parq'),R('garde','Garde-manger froid',-1,27,24,44,34,'tile2'),
+ R('arch','Archives',-1,0,22,13,34,'parq'),R('garde','Garde-manger froid',-1,27,24,44,34,'tile2'),R('sec','Salle secrète',-1,13,26,27,34,'stone'),
 ];
 ROOMS.forEach((r,i)=>r.idx=i);
 const RID={};ROOMS.forEach(r=>RID[r.id]=r);
@@ -103,6 +133,24 @@ const DOORS=[
  {lv:-1,ax:'z',f:27,a:24,b:26},
 ];
 const PASSAGE={lv:0,ax:'z',f:13,a:5,b:7}; // hidden behind the sliding bookshelf
+const PASSAGE2={lv:-1,ax:'x',f:26,a:19,b:21}; // hidden behind the pivoting sarcophagus
+// crawl-only openings: vents have a removable grille, arches are open. Crouch to pass (players only).
+const VENTS=[
+ {lv:0,ax:'z',f:21,a:6,b:7},{lv:0,ax:'x',f:12,a:36,b:37},{lv:0,ax:'x',f:22,a:1,b:2},{lv:0,ax:'x',f:23,a:24,b:25},
+ {lv:0,ax:'x',f:24,a:35,b:36},{lv:0,ax:'x',f:24,a:43,b:44},{lv:-1,ax:'x',f:24,a:37,b:38},{lv:-1,ax:'x',f:22,a:10,b:11},
+ {lv:-1,ax:'z',f:27,a:28,b:29},{lv:1,ax:'z',f:13,a:24,b:25},{lv:1,ax:'x',f:24,a:37,b:38},
+];
+const LOWS=[{lv:-1,ax:'x',f:24,a:35,b:36},{lv:0,ax:'z',f:39,a:13,b:14},{lv:1,ax:'x',f:22,a:9,b:10}];
+const FUSES=[{lv:-1,x:43.3,z:22.6,y:-4},{lv:0,x:13.8,z:19.6,y:0},{lv:1,x:13.9,z:26.6,y:4}];
+const TLAMPS=[
+ {n:'Lampe de bureau',x:17.3,z:3.3,y:.8,col:0xa8ff98,int:.8,dist:10},{n:'Lampe de lecture',x:7.8,z:4.7,y:.78,col:0xffc27a,int:.8,dist:10},
+ {n:'Lampe de chevet',x:19.2,z:31.4,y:4.6,col:0xffd8a0,int:.8,dist:10},{n:'Lampe de chevet',x:2.4,z:33.2,y:4.6,col:0xffe090,int:.8,dist:10},
+ {n:'Bougeoir',x:33,z:18.1,y:-3.1,col:0xffa040,int:.9,dist:10},{n:'Bougeoir',x:20,z:30,y:-3.0,col:0xffa040,int:.9,dist:10},
+];
+const TPORTS=[
+ {k:'dumb',n:'Monte-charge',a:{x:37,z:24.75,y:0},b:{x:37,z:24.75,y:4}},
+ {k:'hatch',n:'Trappe secrète',a:{x:3.3,z:1.9,y:0},b:{x:6.6,z:30.4,y:-4}},
+];
 const WINS=[
  {ax:'x',f:0,a:6,b:8,n:'Fenêtre de la bibliothèque'},{ax:'z',f:0,a:18,b:20,n:'Fenêtre du salon'},{ax:'x',f:0,a:33,b:35,n:'Fenêtre du garage'},
  {ax:'x',f:34,a:14,b:16,n:'Fenêtre de la serre'},{ax:'x',f:34,a:31,b:33,n:'Fenêtre de la cuisine'},{ax:'z',f:44,a:14,b:16,n:'Fenêtre du cellier'},
@@ -135,11 +183,21 @@ const FURN=[
  {n:'Table de billard',lv:1,kind:'pool',w:2.6,d:1.3,h:1,col:0x1f5a34,st:[{x:36.5,z:14.3,ry:Math.PI/2},{x:38,z:23,ry:Math.PI/2}]},
  {n:'Caisses',kind:'crate',w:2.4,d:1.2,h:1.3,col:0x8a6a3a,st:[{x:29.4,z:11,ry:0},{x:28.4,z:9,ry:Math.PI/2}]},
  {n:'Tonneaux',lv:-1,kind:'barrel',w:2.4,d:1.2,h:1.3,col:0x6a4a2a,st:[{x:37.6,z:12.95,ry:0},{x:28.4,z:15,ry:Math.PI/2}]},
+ {n:'Commode du hall',kind:'dresser',w:2.2,d:.8,h:1.25,col:0x5a3a22,st:[{x:26.4,z:14.4,ry:-Math.PI/2},{x:20,z:11.75,ry:0}]},
+ {n:'Buffet',kind:'buffet',w:2.4,d:.9,h:1.3,col:0x4a2c18,st:[{x:29.6,z:23.45,ry:Math.PI},{x:27.75,z:17,ry:Math.PI/2}]},
+ {n:'Banquette',kind:'bench',w:2.6,d:.8,h:1.1,col:0x6b2a3a,st:[{x:21.4,z:8.6,ry:0},{x:13.75,z:9.5,ry:Math.PI/2}]},
+ {n:'Chariot de service',kind:'cart',w:2.4,d:1,h:1.25,col:0x8a8f96,st:[{x:37.5,z:24.85,ry:0},{x:28,z:29,ry:Math.PI/2}]},
+ {n:'Commode',lv:1,kind:'dresser',w:2.2,d:.8,h:1.25,col:0x4a3a2a,st:[{x:2.4,z:10.65,ry:0},{x:6,z:21.6,ry:Math.PI}]},
+ {n:'Étagère d’archives',lv:-1,kind:'archrack',w:2.6,d:.9,h:2,col:0x5a5a64,st:[{x:8,z:33.2,ry:Math.PI},{x:12.3,z:24,ry:-Math.PI/2}]},
+ {n:'Sarcophage pivotant',lv:-1,kind:'sarco',w:2.4,d:1,h:1.25,col:0x6a6a72,st:[{x:20,z:25.3,ry:0},{x:23.4,z:25.3,ry:0}]},
+ {n:'Cercueil',lv:-1,kind:'sarco',w:2.4,d:1,h:1.25,col:0x3a2a1e,st:[{x:25.9,z:21.5,ry:Math.PI/2},{x:20,z:18,ry:0}]},
 ];
 const HIDES=[
  {k:'wardrobe',x:12.3,z:1.2,y:0},{k:'wardrobe',x:12.3,z:21,y:0},{k:'locker',x:43.2,z:1.2,y:0},{k:'wardrobe',x:27.9,z:23,y:0},
  {k:'locker',x:35,z:33.2,y:0},{k:'wardrobe',x:12.2,z:24,y:0},{k:'barrel',x:43.2,z:13.2,y:-4},{k:'barrel',x:27.9,z:23,y:-4},
  {k:'wardrobe',x:25.8,z:33,y:4},{k:'wardrobe',x:1,z:33,y:4},
+ {k:'curtain',x:1,z:21,y:0},{k:'crate',x:43.3,z:11,y:0},{k:'bed',x:11.6,z:19,y:4},{k:'coffin',x:25.6,z:18.6,y:-4},{k:'locker',x:13.9,z:1.1,y:0},
+ {k:'curtain',x:26.2,z:22.2,y:0},{k:'barrel',x:43.2,z:33,y:-4},{k:'crate',x:14,z:33,y:-4},{k:'locker',x:38.3,z:13,y:4},
 ];
 const NOISE=[
  {k:'piano',n:'Piano',x:38,z:32.6,y:4,w:2.2,d:1.2,h:1.0,r:42},
@@ -159,7 +217,7 @@ const LAMPS=[
  ['suite',20,7.3,28,0xffd0a0,1.05,16,0,1],['music',36,7.3,29,0xc080ff,.9,16,.1,0],['jeux',33,7.3,18,0x90ff90,.9,16,0,0],
  ['palier',41.5,7.3,22.5,0xffc890,.5,10,0,0],['chW',6,7.3,16,0x80a8ff,.7,14,0,0],['chSW',6,7.3,28,0xffe090,.7,14,0,0],
  ['cave',33,-.7,18,0xffb060,.9,15,.25,0],['chauf',41.5,-.7,18,0xff7020,1.0,13,.4,0],['tun',16,-.7,15.5,0xff3030,.55,10,.2,0],['tun',24,-.7,15.5,0xff3030,.55,10,.2,0],
- ['lab',6.5,-.7,16,0x40ff90,.9,14,.15,1],['crypt',20,-.7,21.5,0x6080ff,.75,14,.1,0],['arch',6.5,-.7,28,0xffe080,.7,13,.1,0],['garde',36,-.7,29,0xc8e8ff,.8,15,.1,0],
+ ['lab',6.5,-.7,16,0x40ff90,.9,14,.15,1],['sec',20,-.7,30,0xff4060,.8,14,.3,1],['crypt',20,-.7,21.5,0x6080ff,.75,14,.1,0],['arch',6.5,-.7,28,0xffe080,.7,13,.1,0],['garde',36,-.7,29,0xc8e8ff,.8,15,.1,0],
 ];
 const GARDEN_LAMPS=[[-3,3,-3],[47,3,-3],[-3,3,37],[47,3,37],[22,3,-3.5],[22,3,37.5]];
 
@@ -167,10 +225,11 @@ const GARDEN_LAMPS=[[-3,3,-3],[47,3,-3],[-3,3,37],[47,3,37],[22,3,-3.5],[22,3,37
 const COL=[];
 function addCol(x0,y0,z0,x1,y1,z1,on=true){const c={x0,y0,z0,x1,y1,z1,on};COL.push(c);return c;}
 function collide(e,r=0.35){
+  // r is the walker radius; e.h = body height (1.7 standing, ~1.0 crouching)
   for(let it=0;it<3;it++){
     let hit=false;
     for(let i=0;i<COL.length;i++){const c=COL[i];if(!c.on)continue;
-      if(c.y0>=e.y+1.7||c.y1<=e.y+0.05)continue;
+      if(c.y0>=e.y+(e.h||1.7)||c.y1<=e.y+0.05)continue;
       if(e.x<c.x0-r||e.x>c.x1+r||e.z<c.z0-r||e.z>c.z1+r)continue;
       const nx=clamp(e.x,c.x0,c.x1),nz=clamp(e.z,c.z0,c.z1),dx=e.x-nx,dz=e.z-nz,d2=dx*dx+dz*dz;
       if(d2<r*r){
@@ -200,7 +259,7 @@ function floorH(x,z,cy){
 }
 function stepVert(e,dt){
   const t=floorH(e.x,e.z,e.y);e.fell=0;
-  if(e.vy>0||e.y-t>0.35){e.vy-=14*dt;e.y+=e.vy*dt;if(e.y<=t){if(e.vy<-8)e.fell=1;e.y=t;e.vy=0;}}
+  if(e.vy>0||e.y-t>0.35){e.vy-=14*(e.vy<0?(e.gs||1):1)*dt;e.y+=e.vy*dt;if(e.y<=t){if(e.vy<-8)e.fell=1;e.y=t;e.vy=0;}}
   else{e.y=Math.abs(e.y-t)<0.01?t:lerp(e.y,t,clamp(dt*20,0,1));e.vy=0;}
 }
 function los(ax,az,ay,bx,bz,by){
@@ -270,7 +329,7 @@ function gDyn(){
   for(let l=0;l<3;l++)GN.dyn[l].fill(0);
   for(const d of DYN){
     let b=false;
-    switch(d.type){case'door':b=d.o.state===2;break;case'win':b=true;break;case'exit':b=!d.o.open;break;default:b=true;}
+    switch(d.type){case'door':b=d.o.state>=2;break;case'win':b=true;break;case'exit':b=!d.o.open;break;default:b=true;}
     if(!b||!d.c.on)continue;
     const c=d.c;
     for(let l=0;l<3;l++){const y=LVY[l];if(c.y0>=y+1.7||c.y1<=y+.05)continue;
