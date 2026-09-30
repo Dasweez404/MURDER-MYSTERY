@@ -43,6 +43,7 @@ addEventListener('keydown',e=>{
   if(e.code==='Escape'&&mapOpen){closeMap();return;}
   if(e.code==='Tab'||e.code==='KeyH'){toggleHelp();return;}
   if(e.code==='KeyP'){togglePix();return;}
+  if(e.code==='KeyN'){logMsg('Musique '+(musicToggle()?'activée':'coupée')+' (N).');return;}
   if(MG.on){mgKey(e);return;}
   if(e.code==='KeyE')pressE();
   if(!PV||!PV.al)return;
@@ -58,7 +59,7 @@ function pulseAb(key){const el=$('#abil').querySelector(`[data-k="${key}"]`);if(
 /* ============================ role reveal / help panel ============================ */
 function abilityLines(){
   const c=CHARS[PV.c],L=[];
-  if(PV.r==='m'){L.push(['Clic G','Assassinat silencieux (portée 2 m, visible seulement des témoins)'],['Clic D','Attraper à distance : bruyant, recharge 14 s'],['R','Saboter l’objectif proche (recharge 25 s)']);}
+  if(PV.r==='m'){L.push(['Clic G','Assassinat silencieux (portée 2 m, visible seulement des témoins)'],['Clic D','Attraper à distance (aide à la visée, 16 m) : bruyant, recharge 11 s'],['R','Saboter l’objectif proche (recharge 25 s)']);}
 
   if(c.p)L.push([PV.r==='m'?'G':'G / Clic G',c.passive]);
   L.push(['A / Q',c.q.n+' — '+c.q.d],['F',c.f.n+' — '+c.f.d]);
@@ -223,7 +224,7 @@ function moveMe(dt){
       moveEnt(ME,dx,dz);if(run)fl|=2;moving=true;ME.step+=Math.hypot(dx,dz);
       const interval=run?1.7:1.2;if(!crouch&&ME.step>interval){ME.step=0;sfx(run?'run':'step',ME.x,ME.z,ME.y,run?6:4,.35);}
     }
-    if(K.Space&&ME.vy===0&&ME.y-floorH(ME.x,ME.z,ME.y)<.02)ME.vy=CHARS[PV.c].k==='spa'?6.4:4.6;
+    if(K.Space&&ME.vy===0&&ME.y-floorH(ME.x,ME.z,ME.y)<.02)ME.vy=CHARS[PV.c].k==='spa'?7.8:6;
   }
   stepVert(ME,dt);ME.fl=fl;return moving;
 }

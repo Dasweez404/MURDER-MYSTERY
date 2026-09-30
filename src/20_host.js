@@ -6,7 +6,8 @@ const BASE={walk:3.4,run:5.6,crouch:1.7};
 function vfx(f,x,y,z,o){ev(Object.assign({k:'f',f,x:r1(x),y:r1(y),z:r1(z)},o||{}));}
 function hit(p){ev({k:'h',to:p.i});}
 function ev(o){o.i=++G.eid;o.t0=G.t;G.evs.push(o);}
-function snd(s,x,z,y,r){ev({k:'s',s,x:r1(x),z:r1(z),y:r1(y),r});if(['piano','gramo','bell','tv','rg','shot','scream'].includes(s))G.noiseLast={x,z,y,t:G.t,k:s};
+const SAB_FUSE=7,SAB_JAM=14,SAB_OBJ=16;
+function snd(s,x,z,y,r){ev({k:'s',s,x:r1(x),z:r1(z),y:r1(y),r});if(['piano','gramo','bell','tv','rg','shot','scream','swt'].includes(s))G.noiseLast={x,z,y,t:G.t,k:s};
   if(s==='rg'||s==='shot')for(const b of G.P)if(b.bot&&b.alive&&b.role!=='m'&&hyp(b.x,b.z,x,z)<r*.6)b.ai.knows=true;}
 function say(p,t,bad){ev({k:'m',to:p?p.i:-1,t,b:bad?1:0});}
 const pd=(p,x,z)=>hyp(p.x,p.z,x,z);
@@ -118,14 +119,17 @@ function hostAct(p,a){
     case 'rep':repObj(p,a.i);break;
     case 'lev':leverAct(p,a.i);break;
     case 'hide':hideAct(p,a.i);break;
-    case 'sw':{const s=WORLD.switches[a.i];if(!s||pd(p,s.x,s.z)>3||Math.abs(p.y-s.y)>2)return;G.lights^=(1<<s.room);snd('click',s.x,s.z,s.y,10);break;}
+    case 'sw':{const s=WORLD.switches[a.i];if(!s||pd(p,s.x,s.z)>3||Math.abs(p.y-s.y)>2)return;if(G.t<(s.cd||0)){say(p,'L’interrupteur grésille… patientez.',1);return;}
+      G.lights^=(1<<s.room);s.cd=G.t+7;snd('swt',s.x,s.z,s.y,30);vfx('flash',s.x,s.y+1.4,s.z);
+      if(p.role!=='m'){stun(p,1.1);say(p,'Le claquement de l’interrupteur vous trahit !',1);}break;}
     case 'noise':{const n=WORLD.noise[a.i];if(!n||G.t<n.cd||pd(p,n.def.x,n.def.z)>2.8||Math.abs(p.y-n.def.y)>2)return;n.cd=G.t+8;
       snd(n.def.k,n.def.x,n.def.z,n.def.y,n.def.r);vfx('note',n.def.x,n.def.y+1.2,n.def.z);say(p,n.def.n+' : tout le monde a pu l’entendre.');break;}
     case 'atk':{if(p.role!=='m'||G.t<p.cdA||p.hidden>=0)return;p.yaw=a.yw??p.yaw;
       const v=rayTarget(p,p.yaw,1.95,1.3);p.cdA=G.t+1.2;p.atkU=G.t+.45;vfx('slash',p.x,p.y,p.z,{yw:p.yaw});if(v)kill(p,v,p);else say(p,'Coup dans le vide.',1);break;}
     case 'rg':{if(p.role!=='m'||G.t<p.cdG||p.hidden>=0)return;if(G.t<20){say(p,'Patientez encore un peu…',1);return;}
-      p.yaw=a.yw??p.yaw;const v=rayTarget(p,p.yaw,12,.16);p.cdG=G.t+14;snd('rg',p.x,p.z,p.y,48);
-      vfx('slash',p.x,p.y,p.z,{yw:p.yaw,rg:1});if(v){const[fx,fz]=fwd(p.yaw);stun(v,1.6);tp(v,p.x+fx*1.25,p.z+fz*1.25,p.y);hit(p);say(v,'On vous attrape à distance !',1);}else say(p,'Raté.',1);break;}
+      p.yaw=a.yw??p.yaw;let v=rayTarget(p,p.yaw,16,.5);p.cdG=G.t+(v?11:5);snd('rg',p.x,p.z,p.y,48);
+      vfx('slash',p.x,p.y,p.z,{yw:p.yaw,rg:1});
+      if(v){vfx('grab',p.x,p.y,p.z,{tx:r1(v.x),tz:r1(v.z),ty:r1(v.y)});const[fx,fz]=fwd(p.yaw);const hx=p.x+fx*1.3,hz=p.z+fz*1.3,ok=walkClear(p.x,p.z,p.y,hx,hz,p.y);stun(v,2.2);tp(v,ok?hx:p.x+fx*.9,ok?hz:p.z+fz*.9,p.y);vfx('stun',v.x,v.y,v.z);hit(p);say(v,'On vous attrape à distance !',1);say(p,'Proie attrapée : frappez vite !');}else say(p,'Raté.',1);break;}
     case 'sab':sabotage(p);break;
     case 'vent':{const v=WORLD.vents[a.i];if(!v||pd(p,v.cx,v.cz)>2.4||Math.abs(p.y-v.y)>2)return;G.vents^=(1<<a.i);snd('door',v.cx,v.cz,v.y,12);break;}
     case 'tl':{const l=WORLD.tlamps[a.i];if(!l||pd(p,l.x,l.z)>2.6||Math.abs(p.y-l.y)>2)return;G.tl^=(1<<a.i);snd('click',l.x,l.z,l.y,8);break;}
@@ -273,6 +277,11 @@ function speedOf(p){
 function hostTick(dt,getPos){
   if(!G||G.over)return;
   G.t+=dt;
+  // sabotage is brief: blackouts and jams wear off by themselves (repairing earlier still works)
+  WORLD.fuses.forEach((f,i)=>{if(!G.fuse[i]&&G.t-G.fuseT[i]>SAB_FUSE){G.fuse[i]=1;snd('chime',f.x,f.z,f.y,30);say(null,'Le courant revient.');}});
+  WORLD.doors.forEach(d=>{if(d.state===3&&G.t-d.sabT>SAB_JAM){d.state=0;d.col.on=false;snd('chime',d.cx,d.cz,d.y,20);}});
+  WORLD.exits.forEach(e=>{if(e.jam&&G.t-e.jamT>SAB_JAM){e.jam=false;snd('chime',e.lx,e.lz,0,24);}});
+  G.ob.forEach((o,i)=>{if(o.st===2&&G.t-o.sabT>SAB_OBJ){o.st=0;snd('chime',OBJS[i].x,OBJS[i].z,OBJS[i].y,24);}});
   for(const p of G.P){
     if(!p.bot){const s=getPos(p);if(s){p.x=s.x;p.y=s.y;p.z=s.z;p.yaw=s.yw;p.pit=s.pt;p.fl=s.fl;}}
     else if(p.alive&&!p.escaped)botThink(p,dt);

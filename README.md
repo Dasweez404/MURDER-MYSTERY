@@ -13,3 +13,5 @@ Rendu pixel-art (touche P pour basculer), ventilations à passer accroupi, fusib
 Sources : `src/`, assemblées par `src/build.sh`.
 
 Carte interactive (touche M) : onglets par niveau, survol = infos de la pièce, clic = marqueur (danger / suspect / sûr / note), clic droit = retirer, molette + glisser = zoom, calques (objectifs, sorties, escaliers, portes, électricité, corps, ma trace).
+
+Sabotages temporaires (coupure de courant ~7 s, portes/leviers ~14 s, objectifs ~16 s), musique douce procédurale (N pour couper), saut plus haut, interrupteurs bruyants (et étourdissants pour un innocent), grab du meurtrier avec aide à la visée et faisceau visible.
