@@ -85,6 +85,9 @@ label.l{font:700 12px var(--mono);letter-spacing:.08em;color:var(--dim);text-tra
 .ab span{font-size:11px;line-height:1.1;padding:14px 4px 0;color:var(--fg)}
 .ab i{position:absolute;left:0;right:0;bottom:0;background:rgba(226,57,74,.55);height:0}
 .ab.off{opacity:.45}
+.ab.rdy{border-color:var(--brass)}
+.ab.pulse{animation:apulse .45s}
+@keyframes apulse{0%{transform:scale(1.3);box-shadow:0 0 22px var(--brass)}100%{transform:scale(1)}}
 .ab.used{opacity:.3}
 #cross{left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:rgba(255,255,255,.75);padding:0;border:0;backdrop-filter:none}
 #prompt{left:50%;top:58%;transform:translateX(-50%);text-align:center;font-weight:700;display:none}
@@ -97,7 +100,7 @@ label.l{font:700 12px var(--mono);letter-spacing:.08em;color:var(--dim);text-tra
 #ping i{position:absolute;left:-14px;top:-150px;width:0;height:0;border:14px solid transparent;border-bottom:30px solid var(--blood);filter:drop-shadow(0 0 6px #000)}
 #dead{left:50%;top:38%;transform:translateX(-50%);text-align:center;display:none}
 #mapov{position:absolute;inset:0;display:none;place-items:center;background:rgba(5,4,8,.82)}
-#mapov canvas{max-width:92vw;max-height:84vh;border:1px solid var(--line);background:#100e16}
+#mapov canvas{max-width:96vw;max-height:84vh;border:1px solid var(--line);background:#100e16}
 #mg{position:absolute;inset:0;display:none;place-items:center;background:rgba(5,4,8,.55)}
 #mg .box{width:min(440px,92vw);background:var(--panel);border:1px solid var(--brass);padding:20px;border-radius:4px;text-align:center}
 #mg h3{margin:0 0 4px;font:900 26px var(--display);letter-spacing:.08em;text-transform:uppercase}
@@ -108,6 +111,38 @@ label.l{font:700 12px var(--mono);letter-spacing:.08em;color:var(--dim);text-tra
 .seqrow{display:flex;gap:8px;justify-content:center;margin:12px 0;font:700 26px var(--mono)}
 .seqrow span{width:44px;height:44px;display:grid;place-items:center;background:var(--ink);border:1px solid var(--line);border-radius:3px}
 .seqrow span.ok{border-color:var(--ok);color:var(--ok)}
+#hitm{position:absolute;left:50%;top:50%;width:26px;height:26px;transform:translate(-50%,-50%);opacity:0;transition:opacity .25s,transform .25s}
+#hitm:before,#hitm:after{content:'';position:absolute;left:50%;top:50%;width:26px;height:3px;background:#fff;box-shadow:0 0 6px #000;transform:translate(-50%,-50%) rotate(45deg)}
+#hitm:after{transform:translate(-50%,-50%) rotate(-45deg)}
+#banner.kill{font-size:clamp(34px,7vw,74px);color:#ff3b4e;animation:kill .35s ease-out;text-shadow:0 0 22px #b0001a,0 3px 0 #000}
+#banner.ok{color:var(--ok);font-size:clamp(30px,6vw,60px)}
+@keyframes kill{0%{transform:translateX(-50%) scale(1.8);opacity:0}60%{transform:translateX(-50%) scale(.95);opacity:1}100%{transform:translateX(-50%) scale(1)}}
+#roomlbl{left:12px;top:92px;font:700 12px var(--mono);letter-spacing:.08em;color:var(--brass);text-transform:uppercase}
+#dark{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 45%,rgba(0,0,0,.55) 100%)}
+#helpbtn{position:absolute;left:12px;bottom:12px;pointer-events:auto;background:rgba(11,10,16,.85);border:1px solid var(--line);padding:7px 12px;border-radius:3px;font:700 12px var(--mono);letter-spacing:.06em;color:var(--brass)}
+#helpbtn:hover{border-color:var(--brass)}
+#help{position:absolute;left:12px;bottom:52px;width:min(430px,calc(100% - 24px));max-height:calc(100% - 150px);overflow:auto;display:none;pointer-events:auto;background:rgba(11,10,16,.92);border:1px solid var(--brass);border-radius:4px;padding:14px;backdrop-filter:blur(4px)}
+#help h4{font:700 12px var(--mono);letter-spacing:.1em;color:var(--dim);text-transform:uppercase;margin:12px 0 6px}
+#help h4:first-child{margin-top:0}
+#help .rl{display:flex;align-items:center;gap:10px}
+#help .sw{width:22px;height:22px;border:2px solid #000;flex:none}
+#help .rn{font:900 22px/1 var(--display);letter-spacing:.06em;text-transform:uppercase}
+#help .ab2{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:13px;margin-bottom:6px}
+#help .ab2 b{font:700 12px var(--mono);color:var(--brass);padding:2px 6px;background:var(--panel2);border-radius:2px;align-self:start}
+#help .ab2 span{color:var(--fg)}#help .ab2 em{font-style:normal;color:var(--dim);grid-column:2}
+#help ul{margin:0;padding-left:18px;font-size:13px;color:var(--dim)}
+#help .ol{display:flex;gap:8px;font-size:13px;align-items:center}#help .ol i{width:10px;height:10px;border-radius:50%;flex:none}
+#reveal{position:absolute;inset:0;display:none;place-items:center;background:radial-gradient(circle at 50% 40%,rgba(20,6,10,.78),rgba(2,1,4,.96));z-index:5;cursor:pointer;animation:rvin .5s ease-out}
+@keyframes rvin{from{opacity:0}to{opacity:1}}
+#reveal .rv{text-align:center;max-width:620px;padding:24px}
+#reveal .rvk{font:700 13px var(--mono);letter-spacing:.3em;color:var(--dim);margin-bottom:10px}
+#reveal .rvr{font:900 clamp(56px,14vw,128px)/.85 var(--display);text-transform:uppercase;letter-spacing:.02em}
+#reveal .rvc{display:inline-flex;align-items:center;gap:10px;margin-top:14px;font:700 20px var(--display);letter-spacing:.1em;text-transform:uppercase}
+#reveal .rvc i{width:26px;height:26px;border:3px solid #000;display:inline-block}
+#reveal p{color:var(--dim);margin:14px auto;max-width:48ch}
+#reveal .rvab{display:grid;gap:6px;text-align:left;margin:16px auto;max-width:480px;font-size:14px}
+#reveal .rvab div{background:rgba(255,255,255,.05);border-left:3px solid var(--brass);padding:6px 10px}
+#reveal .rvab b{font-family:var(--mono);color:var(--brass);margin-right:8px}
 #endc{max-width:620px;margin:8vh auto 0}
 #endc .big{font:900 clamp(44px,9vw,92px)/.9 var(--display);text-transform:uppercase;letter-spacing:.02em}
 #tip{position:absolute;right:12px;bottom:12px;font:500 11px var(--mono);color:var(--dim);text-align:right;background:none;border:0;padding:0;backdrop-filter:none}
@@ -144,10 +179,10 @@ label.l{font:700 12px var(--mono);letter-spacing:.08em;color:var(--dim);text-tra
             <dt>ZQSD / WASD</dt><dd>Se déplacer</dd>
             <dt>Souris · flèches</dt><dd>Regarder (clic = capturer la souris)</dd>
             <dt>Maj · Ctrl/C · Espace</dt><dd>Courir (bruyant) · s’accroupir (discret) · sauter</dd>
-            <dt>E</dt><dd>Interagir : portes, meubles, objectifs, levier, cachette</dd>
+            <dt>E</dt><dd>Interagir : portes, meubles, interrupteurs, objectifs, levier, cachette, piano…</dd>
             <dt>Clic G · Clic D · R</dt><dd>Meurtrier : tuer de près · attrape à distance (bruyant) · saboter</dd>
-            <dt>A / Q · F</dt><dd>Capacité rechargeable · capacité unique</dd>
-            <dt>M</dt><dd>Plan du manoir</dd>
+            <dt>A (Q) · F</dt><dd>Capacité rechargeable · capacité unique</dd>
+            <dt>M · Tab</dt><dd>Plan des 3 niveaux · rôle &amp; capacités</dd>
           </dl>
           <p class="note" style="margin-top:12px">Clavier + souris requis. Aucune réunion : les cadavres, bruits, portes et sabotages sont vos seuls indices.</p>
         </div>
@@ -219,7 +254,7 @@ label.l{font:700 12px var(--mono);letter-spacing:.08em;color:var(--dim);text-tra
     <div class="hbox" id="obj"><div class="t">SÉCURISATIONS — 5 REQUISES</div><div class="pips" id="pips"></div><div class="s" id="objS"></div></div>
     <div class="hbox" id="top"><div id="clock">10:00</div><div id="phase">EXPLORATION</div></div>
     <div class="hbox" id="role"><div class="r" id="roleR"></div><div class="c" id="roleC"></div><div id="alive"></div></div>
-    <div class="hbox" id="cross"></div>
+    <div id="dark"></div><div class="hbox" id="cross"></div><div id="hitm"></div><div class="hbox" id="roomlbl"></div>
     <div class="hbox" id="prompt"></div>
     <div class="hbox" id="prog"><i></i></div>
     <div class="hbox" id="banner"></div>
@@ -227,11 +262,12 @@ label.l{font:700 12px var(--mono);letter-spacing:.08em;color:var(--dim);text-tra
     <div class="hbox" id="dead"><div class="big" style="font:900 40px var(--display);color:var(--blood)">VOUS ÊTES MORT</div><div class="note">Fantôme : vous pouvez encore avancer les objectifs (plus lentement). Plus de pouvoirs, plus de communication.</div></div>
     <div id="msgs" class="hbox"></div>
     <div id="abil" class="hbox"></div>
-    <div id="tip">M : plan · Échap : libérer la souris</div>
+    <button id="helpbtn" type="button">Rôle &amp; capacités (Tab)</button><div id="help"></div><div id="tip">M : plan · Échap : libérer la souris</div>
   </div>
   <div id="fx"></div>
+  <div id="reveal"><div class="rv"><div class="rvk" id="rvK"></div><div class="rvr" id="rvR"></div><div class="rvc" id="rvC"></div><p id="rvG"></p><div class="rvab" id="rvA"></div><div class="note">Cliquez ou appuyez sur une touche pour commencer</div></div></div>
   <div id="mg"><div class="box" id="mgbox"></div></div>
-  <div id="mapov"><canvas id="mapc" width="900" height="560"></canvas></div>
+  <div id="mapov"><canvas id="mapc" width="1180" height="340"></canvas></div>
   <div id="resume"><div class="btn primary" style="pointer-events:none">Cliquez pour reprendre</div></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>

@@ -88,7 +88,6 @@ function launch(){
   PV=pvFor(G.P[my]);
   if(V.mode==='host'&&NET.nr){NET.hostPeer=NET.myPeer;NET.nr.emit('go',{roster}).catch(()=>{});}
   audioInit();tryLock();
-  banner(PV.r==='m'?'Vous êtes le meurtrier':'Vous êtes innocent',2600);
   logMsg(PV.r==='m'?'Isolez vos cibles. Vous pourrez frapper dans 20 s.':'Sécurisez 5 objectifs puis ouvrez les sorties. Méfiez-vous de tout le monde.');
 }
 $('#bStart').onclick=()=>{if(L.solo||NET.isHost)launch();};
@@ -106,11 +105,11 @@ function showEnd(){
   $('#endscr').hidden=false;$('#hud').hidden=true;
 }
 function toLobby(fromHost){
-  V.on=false;V.over=false;G=null;PV=null;gl.style.filter='';for(const k in K)K[k]=false;
+  V.on=false;V.over=false;G=null;PV=null;gl.style.filter='';for(const k in K)K[k]=false;V.revealOn=false;$('#reveal').style.display='none';ME.look=null;toggleHelp(false);
   $('#fx').style.opacity=0;$('#mg').style.display='none';clearView();
   if(NET.nr){openLobby(NET.isHost?'VOUS HÉBERGEZ · PARTAGEZ LE CODE':'SALON DE '+NET.code,NET.code);lobbySync();}
   else openLobby('PARTIE SOLO · VOUS CONTRE LES BOTS');
 }
 $('#bAgain').onclick=()=>{if(NET.isHost&&NET.nr)NET.nr.emit('lob',{}).catch(()=>{});toLobby();};
 /* test hooks */
-window.__mm={get G(){return G;},V,ME,get PV(){return PV;},launch,L,hostTick,newGame,snapshot,pvFor,NODES,COL,WORLD,hostAct,findPath,nearestNode,los,get NET(){return NET;},toLobby};
+window.__mm={updateLamps,ROOMS,DOORS,STAIRS,get G(){return G;},V,ME,get PV(){return PV;},launch,L,hostTick,newGame,snapshot,pvFor,COL,WORLD,hostAct,planPath,gDyn,GN,los,OBJS,STAIRS,EXITS,HIDES,get NET(){return NET;},toLobby};

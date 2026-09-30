@@ -3,6 +3,8 @@
 /* Runs on the solo player's tab or on the hosting player's tab. Clients only send inputs and render snapshots. */
 let G=null;
 const BASE={walk:3.4,run:5.6,crouch:1.7};
+function vfx(f,x,y,z,o){ev(Object.assign({k:'f',f,x:r1(x),y:r1(y),z:r1(z)},o||{}));}
+function hit(p){ev({k:'h',to:p.i});}
 function ev(o){o.i=++G.eid;o.t0=G.t;G.evs.push(o);}
 function snd(s,x,z,y,r){ev({k:'s',s,x:r1(x),z:r1(z),y:r1(y),r});}
 function say(p,t,bad){ev({k:'m',to:p?p.i:-1,t,b:bad?1:0});}
@@ -26,7 +28,7 @@ function newGame(cfg){
   for(let i=0;i<P.length;i++){r-=w[i];if(r<=0){mi=i;break;}}
   P.forEach((p,i)=>{
     p.i=i;p.ch=take(p.ct);p.role=i===mi?'m':'i';
-    const a=i/P.length*Math.PI*2;p.x=21.2+Math.cos(a)*3.0;p.z=15+Math.sin(a)*3.2;p.y=0;p.vy=0;p.yaw=a;p.pit=0;p.fl=0;
+    const a=i/P.length*Math.PI*2;p.x=21.5+Math.cos(a)*3.0;p.z=17+Math.sin(a)*3.0;p.y=0;p.vy=0;p.yaw=a;p.pit=0;p.fl=0;
     p.alive=true;p.escaped=false;p.hidden=-1;p.hideU=0;p.hideCd=0;p.tpN=0;p.tpTo=null;
     p.stunU=0;p.silU=0;p.invisU=0;p.spU=0;p.spM=1;p.slU=0;p.slM=1;p.invU=0;p.shU=0;p.blU=0;p.scanU=0;
     p.cdQ=0;p.cdF=0;p.cdA=p.role==='m'?20:0;p.cdS=0;p.cdG=0;p.cdP=0;p.linked=-1;
@@ -36,13 +38,14 @@ function newGame(cfg){
   G={t:0,eid:0,evs:[],P,mur:P[mi],phase:0,over:false,win:null,why:'',limit:600,
     ob:OBJS.map((o,i)=>({st:0,func:func.includes(i),prev:0})),done:0,
     ea,exUsed:new Set(),zones:[],zid:0,bodies:[],links:[],nextPv:0,nextSnap:0,peerIdx:new Map(),
-    started:Date.now()};
+    lights:(1<<ROOMS.length)-1,started:Date.now()};
   P.forEach(p=>{if(p.peer)G.peerIdx.set(p.peer,p.i);});
   // reset world state
   WORLD.doors.forEach(d=>{d.state=1;d.col.on=true;d.barU=0;});
   WORLD.wins.forEach(w=>{w.state=1;w.col.on=true;});
   WORLD.exits.forEach((e,i)=>{e.active=ea.includes(i);e.open=false;e.used=false;e.col.on=true;});
-  WORLD.furn.forEach(f=>{setFurn(f,0,true);});
+  WORLD.furn.forEach(f=>{f.cdU=0;setFurn(f,0,true);});
+  WORLD.noise.forEach(n=>n.cd=0);
   G.zones.forEach(z=>z.col&&(z.col.on=false));
   return G;
 }
@@ -71,8 +74,8 @@ function kill(k,v,how){
   if(G.t<v.shU){v.shU=0;stun(v,1.5);stun(k,1.0);say(v,'Votre protection a absorbé le coup !');say(k,'Une protection a absorbé le coup.',1);k.cdA=G.t+4;snd('hit',v.x,v.z,v.y,14);return false;}
   v.alive=false;v.hidden=-1;
   G.bodies.push({i:v.i,x:v.x,y:v.y,z:v.z,yaw:v.yaw});
-  snd('kill',v.x,v.z,v.y,8);
-  say(v,'Vous avez été tué. Vous restez dans la partie en fantôme.',1);
+  snd('kill',v.x,v.z,v.y,10);vfx('kill',v.x,v.y,v.z,{by:k.i,v:v.i});hit(k);
+  say(v,'Vous avez été assassiné. Vous restez dans la partie en fantôme.',1);say(k,'Assassinat réussi : '+CHARS[v.ch].n+'.');
   for(const l of G.links){if(l.done)continue;
     if(l.a===v.i||l.b===v.i){const o=G.P[l.a===v.i?l.b:l.a];if(o.alive){l.done=true;o.spU=G.t+10;o.spM=1.5;o.invU=G.t+5;say(o,'Votre lien est mort : bonus de vitesse et insensibilité !');}}}
   // witnesses (bots)
@@ -81,11 +84,11 @@ function kill(k,v,how){
   return true;
 }
 function neutralize(m){
-  m.alive=false;G.bodies.push({i:m.i,x:m.x,y:m.y,z:m.z,yaw:m.yaw});G.neut=true;snd('kill',m.x,m.z,m.y,30);
+  m.alive=false;G.bodies.push({i:m.i,x:m.x,y:m.y,z:m.z,yaw:m.yaw});G.neut=true;snd('kill',m.x,m.z,m.y,30);vfx('neut',m.x,m.y,m.z);
 }
 function zoneAdd(type,x,z,y,r,dur){
   const z0={id:++G.zid,type,x,z,y,r,until:G.t+dur};
-  if(type==='gum'){z0.col=addCol(x-1.1,y,z-1.1,x+1.1,y+2.4,z+1.1,true);}
+  if(type==='gum'){z0.col=addCol(x-1.1,y,z-1.1,x+1.1,y+2.4,z+1.1,true);z0.col.dynf=1;DYN.push({c:z0.col,type:'gum'});}
   G.zones.push(z0);return z0;
 }
 
@@ -103,20 +106,23 @@ function hostAct(p,a){
     case 'door':{const d=WORLD.doors[a.i];if(!d||pd(p,d.cx,d.cz)>3.2||Math.abs(p.y-d.y)>2)return;
       if(d.state===2){say(p,'La porte est barricadée.',1);return;}setDoor(d,d.state===0?1:0);break;}
     case 'win':{const w=WORLD.wins[a.i];if(!w||pd(p,w.cx,w.cz)>2.6||p.y>1)return;w.state=w.state?0:1;w.col.on=!!w.state;snd('door',w.cx,w.cz,0,14);break;}
-    case 'furn':{const f=WORLD.furn[a.i];if(!f)return;const c=f.box[f.s],cx=(c[0]+c[2])/2,cz=(c[1]+c[3])/2;if(pd(p,cx,cz)>3.4)return;
+    case 'furn':{const f=WORLD.furn[a.i];if(!f)return;const c=f.box[f.s],cx=(c[0]+c[2])/2,cz=(c[1]+c[3])/2;if(pd(p,cx,cz)>3.4||Math.abs(p.y-f.y)>2)return;
       if(G.t<(f.cdU||0))return;const s2=1-f.s,b=f.box[s2];
-      for(const q of G.P){if(!q.alive||q.escaped||Math.abs(q.y)>2)continue;if(q.x>b[0]-.5&&q.x<b[2]+.5&&q.z>b[1]-.5&&q.z<b[3]+.5){say(p,'Quelqu’un gêne le meuble.',1);return;}}
+      for(const q of G.P){if(!q.alive||q.escaped||Math.abs(q.y-f.y)>2)continue;if(q.x>b[0]-.5&&q.x<b[2]+.5&&q.z>b[1]-.5&&q.z<b[3]+.5){say(p,'Quelqu’un gêne le meuble.',1);return;}}
       f.cdU=G.t+1.2;setFurn(f,s2);break;}
     case 'try':{const o=G.ob[a.i];if(!o||p.role==='m')return;if(o.st===0&&!o.func){o.st=3;say(p,'Ce panneau est hors tension : un des 3 emplacements inutiles.');}break;}
     case 'obj':doneObj(p,a.i,false);break;
     case 'rep':repObj(p,a.i);break;
     case 'lev':leverAct(p,a.i);break;
     case 'hide':hideAct(p,a.i);break;
+    case 'sw':{const s=WORLD.switches[a.i];if(!s||pd(p,s.x,s.z)>3||Math.abs(p.y-s.y)>2)return;G.lights^=(1<<s.room);snd('click',s.x,s.z,s.y,10);break;}
+    case 'noise':{const n=WORLD.noise[a.i];if(!n||G.t<n.cd||pd(p,n.def.x,n.def.z)>2.8||Math.abs(p.y-n.def.y)>2)return;n.cd=G.t+8;
+      snd(n.def.k,n.def.x,n.def.z,n.def.y,n.def.r);vfx('note',n.def.x,n.def.y+1.2,n.def.z);say(p,n.def.n+' : tout le monde a pu l’entendre.');break;}
     case 'atk':{if(p.role!=='m'||G.t<p.cdA||p.hidden>=0)return;p.yaw=a.yw??p.yaw;
-      const v=rayTarget(p,p.yaw,1.95,1.3);p.cdA=G.t+1.2;if(v)kill(p,v);break;}
+      const v=rayTarget(p,p.yaw,1.95,1.3);p.cdA=G.t+1.2;p.atkU=G.t+.45;vfx('slash',p.x,p.y,p.z,{yw:p.yaw});if(v)kill(p,v,p);else say(p,'Coup dans le vide.',1);break;}
     case 'rg':{if(p.role!=='m'||G.t<p.cdG||p.hidden>=0)return;if(G.t<20){say(p,'Patientez encore un peu…',1);return;}
       p.yaw=a.yw??p.yaw;const v=rayTarget(p,p.yaw,12,.16);p.cdG=G.t+14;snd('rg',p.x,p.z,p.y,48);
-      if(v){const[fx,fz]=fwd(p.yaw);stun(v,1.6);tp(v,p.x+fx*1.25,p.z+fz*1.25,p.y);}break;}
+      vfx('slash',p.x,p.y,p.z,{yw:p.yaw,rg:1});if(v){const[fx,fz]=fwd(p.yaw);stun(v,1.6);tp(v,p.x+fx*1.25,p.z+fz*1.25,p.y);hit(p);say(v,'On vous attrape à distance !',1);}else say(p,'Raté.',1);break;}
     case 'sab':sabotage(p);break;
     case 'q':useQ(p,a);break;
     case 'f':useF(p,a);break;
@@ -151,36 +157,36 @@ function sabotage(p){
 }
 function nearestOther(p,r){let b=null,bd=r;for(const t of G.P){if(t===p||!t.alive||t.escaped||t.hidden>=0||Math.abs(t.y-p.y)>2)continue;const d=pd(p,t.x,t.z);if(d<bd){bd=d;b=t;}}return b;}
 function useQ(p,a){
-  if(G.t<p.cdQ||G.t<p.silU)return;p.yaw=a.yw??p.yaw;const c=CHARS[p.ch],[fx,fz]=fwd(p.yaw);let ok=false;
+  if(G.t<p.cdQ||G.t<p.silU)return;p.yaw=a.yw??p.yaw;const c=CHARS[p.ch],[fx_,fz]=fwd(p.yaw);let ok=false;
   switch(c.k){
-    case 'ath':{const t=nearestOther(p,2.6);if(t){if(stun(t,4)){snd('hit',t.x,t.z,t.y,14);say(t,'Vous avez été assommé !',1);}ok=true;}else say(p,'Personne à portée.',1);break;}
-    case 'esc':zoneAdd('smoke',p.x+fx*1.6,p.z+fz*1.6,p.y,3.2,8);snd('puff',p.x,p.z,p.y,14);ok=true;break;
-    case 'exp':zoneAdd('insect',p.x+fx*5,p.z+fz*5,p.y,2.4,10);snd('puff',p.x,p.z,p.y,14);ok=true;break;
-    case 'jou':p.scanU=G.t+5;ok=true;break;
+    case 'ath':{const t=nearestOther(p,2.6);if(t){if(stun(t,4)){snd('hit',t.x,t.z,t.y,14);vfx('stun',t.x,t.y,t.z);hit(p);say(t,'Vous avez été assommé !',1);say(p,'Gant de boxe : cible assommée !');}ok=true;}else say(p,'Personne à portée.',1);break;}
+    case 'esc':zoneAdd('smoke',p.x+fx_*1.6,p.z+fz*1.6,p.y,3.2,8);snd('puff',p.x,p.z,p.y,14);say(p,'Fumigène lancé.');ok=true;break;
+    case 'exp':zoneAdd('insect',p.x+fx_*5,p.z+fz*5,p.y,2.4,10);snd('puff',p.x,p.z,p.y,14);say(p,'Nuage d’insectes lâché.');ok=true;break;
+    case 'jou':p.scanU=G.t+5;say(p,'Indiscrétion : tous les invités sont visibles 5 s.');ok=true;break;
     case 'ing':{let b=null,bd=4.2;for(const d of WORLD.doors){const dd=pd(p,d.cx,d.cz);if(dd<bd&&Math.abs(d.y-p.y)<2){bd=dd;b=d;}}
-      if(b){setDoor(b,2);b.barU=G.t+18;ok=true;}else say(p,'Aucune porte proche.',1);break;}
-    case 'enf':{const t=rayTarget(p,p.yaw,18,.12);if(t){if(G.t>=t.invU){t.blU=G.t+4;say(t,'Un caillou vous aveugle !',1);}ok=true;}else say(p,'Personne dans la ligne de mire.',1);break;}
+      if(b){setDoor(b,2);b.barU=G.t+18;vfx('bar',b.cx,b.y,b.cz);say(p,'Porte barricadée 18 s.');ok=true;}else say(p,'Aucune porte proche.',1);break;}
+    case 'enf':{const t=rayTarget(p,p.yaw,18,.12);if(t){if(G.t>=t.invU){t.blU=G.t+4;say(t,'Un caillou vous aveugle !',1);hit(p);say(p,'Lance-pierre : cible aveuglée !');}ok=true;}else say(p,'Personne dans la ligne de mire.',1);break;}
   }
   if(ok)p.cdQ=G.t+c.q.cd;
 }
 function useF(p,a){
-  if(G.t<p.cdF||G.t<p.silU)return;p.yaw=a.yw??p.yaw;const c=CHARS[p.ch],[fx,fz]=fwd(p.yaw);let ok=false,cd=1e9;
+  if(G.t<p.cdF||G.t<p.silU)return;p.yaw=a.yw??p.yaw;const c=CHARS[p.ch],[fx_,fz]=fwd(p.yaw);let ok=false,cd=1e9;
   switch(c.k){
-    case 'ath':p.spU=G.t+6;p.spM=1.6;p.invU=G.t+6;ok=true;break;
-    case 'esc':p.invisU=G.t+7;ok=true;break;
+    case 'ath':p.spU=G.t+6;p.spM=1.6;p.invU=G.t+6;vfx('aura',p.x,p.y,p.z,{c:0xff5a3a});say(p,'Dopage : vitesse ×1,6 et insensible 6 s !');ok=true;break;
+    case 'esc':p.invisU=G.t+7;vfx('aura',p.x,p.y,p.z,{c:0x7ab0ff});say(p,'Invisible pendant 7 s.');ok=true;break;
     case 'exp':{const t=rayTarget(p,p.yaw,40,.05);snd('shot',p.x,p.z,p.y,70);ok=true;cd=60;
-      if(t){if(t.role==='m'){neutralize(t);say(null,'Coup de fusil ! Le meurtrier est neutralisé.');}else{stun(t,6);say(p,'Mauvaise cible ! Rechargement : 60 s.',1);}}
-      else say(p,'Raté ! Rechargement : 60 s.',1);break;}
+      if(t){vfx('shot',p.x,p.y,p.z,{yw:p.yaw});if(t.role==='m'){neutralize(t);say(null,'Coup de fusil ! Le meurtrier est neutralisé.');}else{stun(t,6);vfx('stun',t.x,t.y,t.z);say(t,'Touché par erreur ! Vous êtes assommé.',1);say(p,'Mauvaise cible ! Rechargement : 60 s.',1);}}
+      else{vfx('shot',p.x,p.y,p.z,{yw:p.yaw});say(p,'Raté ! Rechargement : 60 s.',1);}break;}
     case 'jou':{const t=nearestOther(p,12);if(t){G.links.push({a:p.i,b:t.i,done:false});say(p,'Lien établi avec un invité proche.');ok=true;}else say(p,'Personne à proximité.',1);break;}
-    case 'ing':p.shU=G.t+40;ok=true;break;
-    case 'enf':zoneAdd('gum',p.x+fx*3.4,p.z+fz*3.4,p.y,1.4,10);zoneAdd('gum',p.x+fx*5.6,p.z+fz*5.6,p.y,1.4,10);ok=true;break;
+    case 'ing':p.shU=G.t+40;vfx('aura',p.x,p.y,p.z,{c:0x40e0f0});say(p,'Protection : une vie supplémentaire (40 s).');ok=true;break;
+    case 'enf':zoneAdd('gum',p.x+fx_*3.4,p.z+fz*3.4,p.y,1.4,10);zoneAdd('gum',p.x+fx_*5.6,p.z+fz*5.6,p.y,1.4,10);say(p,'Bulles de chewing-gum déployées.');ok=true;break;
   }
   if(ok)p.cdF=G.t+cd;
 }
 function usePrimary(p,a){
   if(p.role==='m'||G.t<p.cdP||G.t<p.silU)return;p.yaw=a.yw??p.yaw;const c=CHARS[p.ch];
-  if(c.k==='esc'){const t=rayTarget(p,p.yaw,9,.18);p.cdP=G.t+22;if(t&&G.t>=t.invU){t.silU=G.t+6;t.slU=G.t+4;t.slM=.5;say(t,'Paralysé ! Capacités coupées.',1);}snd('puff',p.x,p.z,p.y,16);}
-  else if(c.k==='enf'){const t=rayTarget(p,p.yaw,7,.2);p.cdP=G.t+16;if(t&&G.t>=t.invU){const[fx,fz]=fwd(p.yaw);stun(t,1.5);tp(t,p.x+fx*1.4,p.z+fz*1.4,p.y);}}
+  if(c.k==='esc'){const t=rayTarget(p,p.yaw,9,.18);p.cdP=G.t+22;if(t&&G.t>=t.invU){t.silU=G.t+6;t.slU=G.t+4;t.slM=.5;vfx('stun',t.x,t.y,t.z);hit(p);say(t,'Paralysé ! Capacités coupées.',1);say(p,'Pistolet paralysant : touché !');}else say(p,'Raté.',1);snd('puff',p.x,p.z,p.y,16);}
+  else if(c.k==='enf'){const t=rayTarget(p,p.yaw,7,.2);p.cdP=G.t+16;if(t&&G.t>=t.invU){const[fx,fz]=fwd(p.yaw);stun(t,1.5);tp(t,p.x+fx*1.4,p.z+fz*1.4,p.y);vfx('stun',t.x,t.y,t.z);hit(p);say(p,'Yoyo : invité attrapé !');}else say(p,'Raté.',1);}
 }
 
 /* ---------- simulation tick ---------- */
@@ -200,7 +206,7 @@ function hostTick(dt,getPos){
   }
   for(const d of WORLD.doors)if(d.state===2&&G.t>d.barU)d.state=1;
   for(const e of WORLD.exits)if(e.open&&G.t>e.openU){e.open=false;e.col.on=true;}
-  for(let i=G.zones.length-1;i>=0;i--){const z=G.zones[i];if(G.t>z.until){if(z.col)z.col.on=false;if(z.col){const k=COL.indexOf(z.col);if(k>=0)COL.splice(k,1);}G.zones.splice(i,1);}}
+  for(let i=G.zones.length-1;i>=0;i--){const z=G.zones[i];if(G.t>z.until){if(z.col)z.col.on=false;if(z.col){const k=COL.indexOf(z.col);if(k>=0)COL.splice(k,1);const q=DYN.findIndex(d=>d.c===z.col);if(q>=0)DYN.splice(q,1);}G.zones.splice(i,1);}}
   // escape
   for(const p of G.P){if(!p.alive||p.escaped||p.role==='m')continue;
     for(const e of WORLD.exits){if(!e.open)continue;const d=e.def;
@@ -220,11 +226,11 @@ function snapshot(){
   const S={t:r1(G.t),ph:G.phase,dn:G.done,lim:G.limit,
     ob:G.ob.map(o=>o.st),dr:WORLD.doors.map(d=>d.state),wn:WORLD.wins.map(w=>w.state),fu:WORLD.furn.map(f=>f.s),
     ex:WORLD.exits.map(e=>(e.active&&G.phase>=1?1:0)|(e.open?2:0)|(e.used?4:0)),
-    pl:G.P.map(p=>{let f=0;if(!p.alive)f|=1;if(p.escaped)f|=2;if(G.t<p.stunU)f|=4;if(p.hidden>=0)f|=8;if(G.t<p.invisU)f|=16;if(p.fl&1)f|=64;if(p.fl&2)f|=32;if(G.t<p.invU)f|=128;
+    pl:G.P.map(p=>{let f=0;if(!p.alive)f|=1;if(p.escaped)f|=2;if(G.t<p.stunU)f|=4;if(p.hidden>=0)f|=8;if(G.t<p.invisU)f|=16;if(p.fl&1)f|=64;if(p.fl&2)f|=32;if(G.t<p.invU)f|=128;if(G.t<(p.atkU||0))f|=256;
       return [f,r1(p.x),r1(p.y),r1(p.z),Math.round(p.yaw*100)/100];}),
     bd:G.bodies.map(b=>[b.i,r1(b.x),r1(b.y),r1(b.z),r2(b.yaw)]),
     zn:G.zones.map(z=>[z.id,z.type,r1(z.x),r1(z.z),r1(z.y),z.r,r1(z.until)]),
-    ev:G.evs.filter(e=>e.t0>G.t-2).map(e=>e),al:G.P.filter(p=>p.alive&&!p.escaped).length};
+    lt:G.lights,ev:G.evs.filter(e=>e.t0>G.t-2).map(e=>e),al:G.P.filter(p=>p.alive&&!p.escaped).length};
   if(G.over){S.ov=[G.win,G.why,G.mur.i];S.ro=G.P.map(p=>p.role==='m'?1:0);}
   G.evs=G.evs.filter(e=>e.t0>G.t-4);
   return S;
@@ -237,33 +243,27 @@ function pvFor(p){
 }
 
 /* ---------- bots ---------- */
-function botGo(p,tx,tz,ty,run,dt,stop=.6){
-  const a=p.ai;
-  if(!a.goal||hyp(a.goal[0],a.goal[1],tx,tz)>1.2||G.t>a.replan||a.goal[2]!==ty){
+function botGo(p,tx,tz,ty,run,dt,stop){
+  stop=stop||.6;const a=p.ai;
+  if(!a.goal||hyp(a.goal[0],a.goal[1],tx,tz)>1.2||a.goal[2]!==ty||G.t>a.replan){
     a.goal=[tx,tz,ty];a.replan=G.t+2.5;
-    const s=nearestNode(p.x,p.z,p.y),g=nearestNode(tx,tz,ty),path=(s>=0&&g>=0)?findPath(s,g):null;
-    a.path=path||[];a.pi=0;a.blocked=!path;
-    if(a.path.length>1){ // skip a node that we are already past
-      const n0=NODES[a.path[0]],n1=NODES[a.path[1]];
-      if(hyp(p.x,p.z,n1.x,n1.z)<hyp(n0.x,n0.z,n1.x,n1.z)&&los(p.x,p.z,p.y,n1.x,n1.z,n1.y))a.pi=1;}
+    const path=planPath(p.x,p.z,p.y,tx,tz,ty,G.t);a.path=path||[];a.pi=0;a.blocked=!path;
   }
-  if(a.blocked&&(!los(p.x,p.z,p.y,tx,tz,ty)||Math.abs(p.y-ty)>1.5))return false;
-  let wx=tx,wz=tz;
-  while(a.pi<a.path.length){const n=NODES[a.path[a.pi]];if(hyp(p.x,p.z,n.x,n.z)<.55){a.pi++;continue;}wx=n.x;wz=n.z;break;}
-  const dx=wx-p.x,dz=wz-p.z,d=Math.hypot(dx,dz);
-  if(a.pi>=a.path.length&&d<stop){p.fl=0;return true;}
-  const sp=(run?5.2:3.3)*speedOf(p)*dt;
+  if(a.blocked)return false;
+  let wp=null;
+  while(a.pi<a.path.length){const n=a.path[a.pi],last=a.pi===a.path.length-1;
+    if(hyp(p.x,p.z,n.x,n.z)<(last?stop:.45)&&Math.abs(p.y-n.y)<1.6){a.pi++;continue;}wp=n;break;}
+  if(!wp){p.fl=0;return true;}
+  const dx=wp.x-p.x,dz=wp.z-p.z,d=Math.hypot(dx,dz),sp=(run?5.2:3.3)*speedOf(p)*dt;
   if(G.t>=p.stunU){
-    const ox=p.x,oz=p.z;
     moveEnt(p,dx/(d||1)*Math.min(sp,d),dz/(d||1)*Math.min(sp,d));
     p.yaw=Math.atan2(-dx,-dz);p.fl=run?2:0;
-    // open doors on the way
     for(const dr of WORLD.doors)if(dr.state===1&&Math.abs(dr.y-p.y)<1.5&&hyp(p.x,p.z,dr.cx,dr.cz)<1.9)setDoor(dr,0);
-    // stuck
     a.stuckT+=dt;if(a.stuckT>1.2){a.stuckT=0;if(hyp(p.x,p.z,a.lastX,a.lastZ)<.25){a.stuck=(a.stuck||0)+1;a.replan=0;
-        const ang=Math.random()*6.28;moveEnt(p,Math.cos(ang)*.8,Math.sin(ang)*.8);
-        if(a.stuck>3){const ni=nearestNode(p.x,p.z,p.y),n=NODES[ni];p.x=n.x;p.z=n.z;p.y=n.y;a.stuck=0;}}else a.stuck=0;a.lastX=p.x;a.lastZ=p.z;}
+        const ang=Math.random()*6.28;moveEnt(p,Math.cos(ang)*.8,Math.sin(ang)*.8);}else a.stuck=0;a.lastX=p.x;a.lastZ=p.z;}
   }
+  for(const q of G.P){if(q===p||!q.alive||q.escaped||Math.abs(q.y-p.y)>1.5)continue;const ox=p.x-q.x,oz=p.z-q.z,dd=Math.hypot(ox,oz);
+    if(dd<.6){const push=(.6-dd)*.5,ux=dd>.01?ox/dd:Math.random()-.5,uz=dd>.01?oz/dd:Math.random()-.5;p.x+=ux*push;p.z+=uz*push;collide(p);}}
   stepVert(p,dt);
   return false;
 }
@@ -277,7 +277,7 @@ function facePlayer(p,t){p.yaw=Math.atan2(-(t.x-p.x),-(t.z-p.z));}
 function thinkInn(p,dt){
   const a=p.ai,m=G.mur;
   // fear
-  const seesM=m.alive&&visibleTo(p,m)&&pd(p,m.x,m.z)<(a.knows?13:0)&&Math.abs(m.y-p.y)<2&&los(p.x,p.z,p.y,m.x,m.z,m.y);
+  const seesM=m.alive&&visibleTo(p,m)&&pd(p,m.x,m.z)<(a.knows?((G.lights>>(roomAt(p.x,p.z,p.y)||{idx:0}).idx)&1?13:6):0)&&Math.abs(m.y-p.y)<2&&los(p.x,p.z,p.y,m.x,m.z,m.y);
   if(seesM){
     a.fleeU=G.t+4;a.work=null;
     if(G.t>=p.cdF&&G.t>=p.silU&&pd(p,m.x,m.z)<6){facePlayer(p,m);const k=CHARS[p.ch].k;if(k==='ath'||k==='esc'||k==='ing')hostAct(p,{t:'f',yw:p.yaw});}
@@ -286,7 +286,7 @@ function thinkInn(p,dt){
   }
   if(G.t<a.fleeU){
     if(!a.fleeGoal||G.t>a.fleeRe){a.fleeRe=G.t+2;let best=null,bs=-1;
-      for(const n of NODES){if(n.id[0]==='d'||n.id[0]==='P'||n.id[0]==='X'||n.id[0]==='O')continue;const dm=hyp(n.x,n.z,m.x,m.z),dp=hyp(n.x,n.z,p.x,p.z);
+      for(const r of ROOMS){if(r.void)continue;const n={x:r.cx,z:r.cz,y:r.y},dm=hyp(n.x,n.z,m.x,m.z),dp=hyp(n.x,n.z,p.x,p.z);if(Math.abs(n.y-p.y)>6)continue;
         if(dp<6||dp>26)continue;const s=dm-dp*.3+rnd(4);if(s>bs){bs=s;best=n;}}
       a.fleeGoal=best;}
     if(a.fleeGoal)botGo(p,a.fleeGoal.x,a.fleeGoal.z,a.fleeGoal.y,true,dt,1.2);return;
@@ -296,7 +296,7 @@ function thinkInn(p,dt){
   if(a.wait>0){a.wait-=dt;p.fl=0;return;}
   if(G.phase>=1){
     if(a.work&&a.work.k!=='lev')a.work=null;
-    let ex=WORLD.exits.find(e=>e.open&&(!e.used||WORLD.exits.every(x=>!x.active||x.used||x.i===e.i))&&pd(p,e.cx,e.cz)<(e.used?10:40)&&findPath(nearestNode(p.x,p.z,p.y),NAV['O'+e.i]));
+    let ex=WORLD.exits.find(e=>e.open&&(!e.used||WORLD.exits.every(x=>!x.active||x.used||x.i===e.i))&&pd(p,e.cx,e.cz)<(e.used?10:40));
     if(ex){botGo(p,ex.def.zx[0]*.5+ex.def.zx[1]*.5,ex.def.zz[0]*.5+ex.def.zz[1]*.5,0,true,dt,.4);return;}
     if(!a.work){
       const un=WORLD.exits.filter(x=>x.active&&!x.used),pool=un.length?un:WORLD.exits.filter(x=>x.active);
@@ -329,7 +329,7 @@ function thinkInn(p,dt){
 function thinkMur(p,dt){
   const a=p.ai;
   if(G.t<a.coolU){ // walk away calmly
-    if(!a.fleeGoal||G.t>a.fleeRe){a.fleeRe=G.t+3;a.fleeGoal=pick(NODES.filter(n=>/^[A-Z]/.test(n.id)&&n.id.length<=3&&n.id[0]!=='L'&&n.id[0]!=='X'&&n.id[0]!=='O'&&n.id[0]!=='R'&&n.id[0]!=='P'));}
+    if(!a.fleeGoal||G.t>a.fleeRe){a.fleeRe=G.t+3;{const r=pick(ROOMS.filter(q=>!q.void));a.fleeGoal={x:r.cx,z:r.cz,y:r.y};}}
     if(a.fleeGoal)botGo(p,a.fleeGoal.x,a.fleeGoal.z,a.fleeGoal.y,false,dt,1.5);return;}
   if(G.t>a.retarget){a.retarget=G.t+1.5;
     let best=null,bs=1e9;
